@@ -211,7 +211,7 @@ router.post('/:sessionId/send', [
  *       200:
  *         description: Media message sent successfully
  */
-router.post('/:sessionId/send-media', upload.single('file'), [
+router.post('/:sessionId/send-media', upload.single('file') as any, [
   param('sessionId').notEmpty(),
   body('to').notEmpty().trim(),
   body('caption').optional().trim(),

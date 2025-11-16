@@ -32,10 +32,10 @@ export function makeLibSignalRepository(auth: SignalAuthState): SignalRepository
 			let result: Buffer
 			switch (type) {
 			case 'pkmsg':
-				result = await session.decryptPreKeyWhisperMessage(ciphertext)
+				result = Buffer.from(await session.decryptPreKeyWhisperMessage(ciphertext))
 				break
 			case 'msg':
-				result = await session.decryptWhisperMessage(ciphertext)
+				result = Buffer.from(await session.decryptWhisperMessage(ciphertext))
 				break
 			}
 
@@ -134,7 +134,7 @@ function signalStorage({ creds, keys }: SignalAuthState) {
 			const { signedIdentityKey } = creds
 			return {
 				privKey: Buffer.from(signedIdentityKey.private),
-				pubKey: generateSignalPubKey(signedIdentityKey.public),
+				pubKey: Buffer.from(generateSignalPubKey(signedIdentityKey.public)),
 			}
 		}
 	}

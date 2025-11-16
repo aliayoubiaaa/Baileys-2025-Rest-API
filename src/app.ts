@@ -85,8 +85,8 @@ const limiter = rateLimit({
 });
 
 // Middleware
-app.use(helmet());
-app.use(compression());
+app.use(helmet() as any);
+app.use(compression() as any);
 app.use(cors({
   origin: process.env.CORS_ORIGIN || '*',
   credentials: true
@@ -97,7 +97,7 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(limiter);
 
 // API Documentation
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use('/api-docs', swaggerUi.serve as any, swaggerUi.setup(swaggerSpec) as any);
 
 // Health check
 app.get('/health', (req, res) => {

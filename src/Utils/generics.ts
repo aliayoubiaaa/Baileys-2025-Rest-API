@@ -104,7 +104,12 @@ export const encodeBigEndian = (e: number, t = 4) => {
 	return a
 }
 
-export const toNumber = (t: Long | number | null | undefined): number => ((typeof t === 'object' && t) ? ('toNumber' in t ? t.toNumber() : (t as Long).low) : t || 0)
+export const toNumber = (t: Long | number | null | undefined): number => {
+	if (typeof t === 'object' && t) {
+		return ('toNumber' in t ? t.toNumber() : Number((t as any).low))
+	}
+	return Number(t) || 0
+}
 
 /** unix timestamp of a date in seconds */
 export const unixTimestampSeconds = (date: Date = new Date()) => Math.floor(date.getTime() / 1000)
