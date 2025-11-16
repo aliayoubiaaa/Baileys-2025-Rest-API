@@ -1,15 +1,18 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
-import { AuthenticatedRequest, ApiError } from '../types/api';
+import { AuthenticatedRequest, ApiError } from '../Types/api';
 
 // Extend the AuthenticatedRequest interface to include startTime
-declare module '../types/api' {
+declare module '../Types/api' {
   interface AuthenticatedRequest {
     startTime?: number;
   }
 }
-import { logger } from '../utils/apiLogger';
+import { logger } from '../Utils/apiLogger';
+
+// Re-export for convenience
+export { AuthenticatedRequest };
 
 const prisma = new PrismaClient();
 

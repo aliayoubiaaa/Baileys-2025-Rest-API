@@ -5,7 +5,7 @@ import { asyncHandler } from '../middleware/errorHandler';
 import { authMiddleware } from '../middleware/auth';
 import { DatabaseService } from '../services/DatabaseService';
 import { whatsAppService } from '../app';
-import { ApiResponse } from '../types/api';
+import { ApiResponse } from '../Types/api';
 
 const router = Router();
 const dbService = new DatabaseService();
