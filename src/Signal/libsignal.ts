@@ -16,7 +16,7 @@ export function makeLibSignalRepository(auth: SignalAuthState): SignalRepository
 		},
 		async processSenderKeyDistributionMessage({ item, authorJid }) {
 			const builder = new GroupSessionBuilder(storage)
-			const senderName = jidToSignalSenderKeyName(item.groupId!, authorJid)
+			const senderName = jidToSignalSenderKeyName(item.groupId, authorJid)
 
 			const senderMsg = new SenderKeyDistributionMessage(null, null, null, null, item.axolotlSenderKeyDistributionMessage)
 			const { [senderName]: senderKey } = await auth.keys.get('sender-key', [senderName])
@@ -78,7 +78,7 @@ export function makeLibSignalRepository(auth: SignalAuthState): SignalRepository
 }
 
 const jidToSignalProtocolAddress = (jid: string) => {
-	const { user, device } = jidDecode(jid)!
+	const { user, device } = jidDecode(jid)
 	return new libsignal.ProtocolAddress(user, device || 0)
 }
 

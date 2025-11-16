@@ -39,7 +39,7 @@ export const processHistoryMessage = (item: proto.IHistorySync) => {
 	case proto.HistorySync.HistorySyncType.RECENT:
 	case proto.HistorySync.HistorySyncType.FULL:
 	case proto.HistorySync.HistorySyncType.ON_DEMAND:
-		for(const chat of item.conversations! as Chat[]) {
+		for(const chat of item.conversations as Chat[]) {
 			contacts.push({ id: chat.id, name: chat.name || undefined })
 
 			const msgs = chat.messages || []
@@ -49,7 +49,7 @@ export const processHistoryMessage = (item: proto.IHistorySync) => {
 			delete chat.pinned
 
 			for(const item of msgs) {
-				const message = item.message!
+				const message = item.message
 				messages.push(message)
 
 				if(!chat.messages?.length) {
@@ -68,7 +68,7 @@ export const processHistoryMessage = (item: proto.IHistorySync) => {
 					&& message.messageStubParameters?.[0]
 				) {
 					contacts.push({
-						id: message.key.participant || message.key.remoteJid!,
+						id: message.key.participant || message.key.remoteJid,
 						verifiedName: message.messageStubParameters?.[0],
 					})
 				}
@@ -83,8 +83,8 @@ export const processHistoryMessage = (item: proto.IHistorySync) => {
 
 		break
 	case proto.HistorySync.HistorySyncType.PUSH_NAME:
-		for(const c of item.pushnames!) {
-			contacts.push({ id: c.id!, notify: c.pushname! })
+		for(const c of item.pushnames) {
+			contacts.push({ id: c.id, notify: c.pushname })
 		}
 
 		break

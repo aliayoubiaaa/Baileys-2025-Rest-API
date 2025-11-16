@@ -1,11 +1,11 @@
-import { Router } from 'express';
-import { param, body } from 'express-validator';
-import { handleValidationErrors, asyncHandler } from '../middleware/errorHandler';
-import { sessionMiddleware } from '../middleware/auth';
-import { whatsAppService } from '../app';
-import { ApiResponse } from '../Types/api';
+import { Router } from 'express'
+import { body, param } from 'express-validator'
+import { whatsAppService } from '../app'
+import { sessionMiddleware } from '../middleware/auth'
+import { asyncHandler, handleValidationErrors } from '../middleware/errorHandler'
+import { ApiResponse } from '../Types/api'
 
-const router = Router();
+const router = Router()
 
 /**
  * @swagger
@@ -44,46 +44,46 @@ const router = Router();
  *         description: Group created successfully
  */
 router.post('/:sessionId/create', [
-  param('sessionId').notEmpty(),
-  body('subject').notEmpty().trim().isLength({ min: 1, max: 100 }),
-  body('participants').isArray({ min: 1 }),
-  body('participants.*').isString().notEmpty(),
-  body('description').optional().trim().isLength({ max: 500 })
-], sessionMiddleware, handleValidationErrors, asyncHandler(async (req, res) => {
-  const { sessionId } = req.params;
-  const { subject, participants, description } = req.body;
+	param('sessionId').notEmpty(),
+	body('subject').notEmpty().trim().isLength({ min: 1, max: 100 }),
+	body('participants').isArray({ min: 1 }),
+	body('participants.*').isString().notEmpty(),
+	body('description').optional().trim().isLength({ max: 500 })
+], sessionMiddleware, handleValidationErrors, asyncHandler(async(req, res) => {
+	const { sessionId } = req.params
+	const { subject, participants, description } = req.body
 
-  const session = await whatsAppService.getSession(sessionId);
-  if (!session?.socket) {
-    return res.status(400).json({
-      success: false,
-      error: 'Session not connected',
-      timestamp: new Date().toISOString()
-    } as ApiResponse);
-  }
+	const session = await whatsAppService.getSession(sessionId)
+	if(!session?.socket) {
+		return res.status(400).json({
+			success: false,
+			error: 'Session not connected',
+			timestamp: new Date().toISOString()
+		} as ApiResponse)
+	}
 
-  try {
-    const group = await session.socket.groupCreate(subject, participants);
-    
-    // Set description if provided
-    if (description) {
-      await session.socket.groupUpdateDescription(group.id, description);
-    }
+	try {
+		const group = await session.socket.groupCreate(subject, participants)
 
-    res.json({
-      success: true,
-      data: group,
-      message: 'Group created successfully',
-      timestamp: new Date().toISOString()
-    } as ApiResponse);
-  } catch (error) {
-    res.status(400).json({
-      success: false,
-      error: error.message,
-      timestamp: new Date().toISOString()
-    } as ApiResponse);
-  }
-}));
+		// Set description if provided
+		if(description) {
+			await session.socket.groupUpdateDescription(group.id, description)
+		}
+
+		res.json({
+			success: true,
+			data: group,
+			message: 'Group created successfully',
+			timestamp: new Date().toISOString()
+		} as ApiResponse)
+	} catch(error) {
+		res.status(400).json({
+			success: false,
+			error: error.message,
+			timestamp: new Date().toISOString()
+		} as ApiResponse)
+	}
+}))
 
 /**
  * @swagger
@@ -109,36 +109,36 @@ router.post('/:sessionId/create', [
  *         description: Group metadata retrieved successfully
  */
 router.get('/:sessionId/:groupId/metadata', [
-  param('sessionId').notEmpty(),
-  param('groupId').notEmpty()
-], sessionMiddleware, handleValidationErrors, asyncHandler(async (req, res) => {
-  const { sessionId, groupId } = req.params;
+	param('sessionId').notEmpty(),
+	param('groupId').notEmpty()
+], sessionMiddleware, handleValidationErrors, asyncHandler(async(req, res) => {
+	const { sessionId, groupId } = req.params
 
-  const session = await whatsAppService.getSession(sessionId);
-  if (!session?.socket) {
-    return res.status(400).json({
-      success: false,
-      error: 'Session not connected',
-      timestamp: new Date().toISOString()
-    } as ApiResponse);
-  }
+	const session = await whatsAppService.getSession(sessionId)
+	if(!session?.socket) {
+		return res.status(400).json({
+			success: false,
+			error: 'Session not connected',
+			timestamp: new Date().toISOString()
+		} as ApiResponse)
+	}
 
-  try {
-    const metadata = await session.socket.groupMetadata(groupId);
+	try {
+		const metadata = await session.socket.groupMetadata(groupId)
 
-    res.json({
-      success: true,
-      data: metadata,
-      timestamp: new Date().toISOString()
-    } as ApiResponse);
-  } catch (error) {
-    res.status(400).json({
-      success: false,
-      error: error.message,
-      timestamp: new Date().toISOString()
-    } as ApiResponse);
-  }
-}));
+		res.json({
+			success: true,
+			data: metadata,
+			timestamp: new Date().toISOString()
+		} as ApiResponse)
+	} catch(error) {
+		res.status(400).json({
+			success: false,
+			error: error.message,
+			timestamp: new Date().toISOString()
+		} as ApiResponse)
+	}
+}))
 
 /**
  * @swagger
@@ -177,40 +177,40 @@ router.get('/:sessionId/:groupId/metadata', [
  *         description: Participants added successfully
  */
 router.post('/:sessionId/:groupId/participants/add', [
-  param('sessionId').notEmpty(),
-  param('groupId').notEmpty(),
-  body('participants').isArray({ min: 1 }),
-  body('participants.*').isString().notEmpty()
-], sessionMiddleware, handleValidationErrors, asyncHandler(async (req, res) => {
-  const { sessionId, groupId } = req.params;
-  const { participants } = req.body;
+	param('sessionId').notEmpty(),
+	param('groupId').notEmpty(),
+	body('participants').isArray({ min: 1 }),
+	body('participants.*').isString().notEmpty()
+], sessionMiddleware, handleValidationErrors, asyncHandler(async(req, res) => {
+	const { sessionId, groupId } = req.params
+	const { participants } = req.body
 
-  const session = await whatsAppService.getSession(sessionId);
-  if (!session?.socket) {
-    return res.status(400).json({
-      success: false,
-      error: 'Session not connected',
-      timestamp: new Date().toISOString()
-    } as ApiResponse);
-  }
+	const session = await whatsAppService.getSession(sessionId)
+	if(!session?.socket) {
+		return res.status(400).json({
+			success: false,
+			error: 'Session not connected',
+			timestamp: new Date().toISOString()
+		} as ApiResponse)
+	}
 
-  try {
-    const result = await session.socket.groupParticipantsUpdate(groupId, participants, 'add');
+	try {
+		const result = await session.socket.groupParticipantsUpdate(groupId, participants, 'add')
 
-    res.json({
-      success: true,
-      data: result,
-      message: 'Participants added successfully',
-      timestamp: new Date().toISOString()
-    } as ApiResponse);
-  } catch (error) {
-    res.status(400).json({
-      success: false,
-      error: error.message,
-      timestamp: new Date().toISOString()
-    } as ApiResponse);
-  }
-}));
+		res.json({
+			success: true,
+			data: result,
+			message: 'Participants added successfully',
+			timestamp: new Date().toISOString()
+		} as ApiResponse)
+	} catch(error) {
+		res.status(400).json({
+			success: false,
+			error: error.message,
+			timestamp: new Date().toISOString()
+		} as ApiResponse)
+	}
+}))
 
 /**
  * @swagger
@@ -249,40 +249,40 @@ router.post('/:sessionId/:groupId/participants/add', [
  *         description: Participants removed successfully
  */
 router.post('/:sessionId/:groupId/participants/remove', [
-  param('sessionId').notEmpty(),
-  param('groupId').notEmpty(),
-  body('participants').isArray({ min: 1 }),
-  body('participants.*').isString().notEmpty()
-], sessionMiddleware, handleValidationErrors, asyncHandler(async (req, res) => {
-  const { sessionId, groupId } = req.params;
-  const { participants } = req.body;
+	param('sessionId').notEmpty(),
+	param('groupId').notEmpty(),
+	body('participants').isArray({ min: 1 }),
+	body('participants.*').isString().notEmpty()
+], sessionMiddleware, handleValidationErrors, asyncHandler(async(req, res) => {
+	const { sessionId, groupId } = req.params
+	const { participants } = req.body
 
-  const session = await whatsAppService.getSession(sessionId);
-  if (!session?.socket) {
-    return res.status(400).json({
-      success: false,
-      error: 'Session not connected',
-      timestamp: new Date().toISOString()
-    } as ApiResponse);
-  }
+	const session = await whatsAppService.getSession(sessionId)
+	if(!session?.socket) {
+		return res.status(400).json({
+			success: false,
+			error: 'Session not connected',
+			timestamp: new Date().toISOString()
+		} as ApiResponse)
+	}
 
-  try {
-    const result = await session.socket.groupParticipantsUpdate(groupId, participants, 'remove');
+	try {
+		const result = await session.socket.groupParticipantsUpdate(groupId, participants, 'remove')
 
-    res.json({
-      success: true,
-      data: result,
-      message: 'Participants removed successfully',
-      timestamp: new Date().toISOString()
-    } as ApiResponse);
-  } catch (error) {
-    res.status(400).json({
-      success: false,
-      error: error.message,
-      timestamp: new Date().toISOString()
-    } as ApiResponse);
-  }
-}));
+		res.json({
+			success: true,
+			data: result,
+			message: 'Participants removed successfully',
+			timestamp: new Date().toISOString()
+		} as ApiResponse)
+	} catch(error) {
+		res.status(400).json({
+			success: false,
+			error: error.message,
+			timestamp: new Date().toISOString()
+		} as ApiResponse)
+	}
+}))
 
 /**
  * @swagger
@@ -321,40 +321,40 @@ router.post('/:sessionId/:groupId/participants/remove', [
  *         description: Participants promoted successfully
  */
 router.post('/:sessionId/:groupId/participants/promote', [
-  param('sessionId').notEmpty(),
-  param('groupId').notEmpty(),
-  body('participants').isArray({ min: 1 }),
-  body('participants.*').isString().notEmpty()
-], sessionMiddleware, handleValidationErrors, asyncHandler(async (req, res) => {
-  const { sessionId, groupId } = req.params;
-  const { participants } = req.body;
+	param('sessionId').notEmpty(),
+	param('groupId').notEmpty(),
+	body('participants').isArray({ min: 1 }),
+	body('participants.*').isString().notEmpty()
+], sessionMiddleware, handleValidationErrors, asyncHandler(async(req, res) => {
+	const { sessionId, groupId } = req.params
+	const { participants } = req.body
 
-  const session = await whatsAppService.getSession(sessionId);
-  if (!session?.socket) {
-    return res.status(400).json({
-      success: false,
-      error: 'Session not connected',
-      timestamp: new Date().toISOString()
-    } as ApiResponse);
-  }
+	const session = await whatsAppService.getSession(sessionId)
+	if(!session?.socket) {
+		return res.status(400).json({
+			success: false,
+			error: 'Session not connected',
+			timestamp: new Date().toISOString()
+		} as ApiResponse)
+	}
 
-  try {
-    const result = await session.socket.groupParticipantsUpdate(groupId, participants, 'promote');
+	try {
+		const result = await session.socket.groupParticipantsUpdate(groupId, participants, 'promote')
 
-    res.json({
-      success: true,
-      data: result,
-      message: 'Participants promoted successfully',
-      timestamp: new Date().toISOString()
-    } as ApiResponse);
-  } catch (error) {
-    res.status(400).json({
-      success: false,
-      error: error.message,
-      timestamp: new Date().toISOString()
-    } as ApiResponse);
-  }
-}));
+		res.json({
+			success: true,
+			data: result,
+			message: 'Participants promoted successfully',
+			timestamp: new Date().toISOString()
+		} as ApiResponse)
+	} catch(error) {
+		res.status(400).json({
+			success: false,
+			error: error.message,
+			timestamp: new Date().toISOString()
+		} as ApiResponse)
+	}
+}))
 
 /**
  * @swagger
@@ -393,40 +393,40 @@ router.post('/:sessionId/:groupId/participants/promote', [
  *         description: Participants demoted successfully
  */
 router.post('/:sessionId/:groupId/participants/demote', [
-  param('sessionId').notEmpty(),
-  param('groupId').notEmpty(),
-  body('participants').isArray({ min: 1 }),
-  body('participants.*').isString().notEmpty()
-], sessionMiddleware, handleValidationErrors, asyncHandler(async (req, res) => {
-  const { sessionId, groupId } = req.params;
-  const { participants } = req.body;
+	param('sessionId').notEmpty(),
+	param('groupId').notEmpty(),
+	body('participants').isArray({ min: 1 }),
+	body('participants.*').isString().notEmpty()
+], sessionMiddleware, handleValidationErrors, asyncHandler(async(req, res) => {
+	const { sessionId, groupId } = req.params
+	const { participants } = req.body
 
-  const session = await whatsAppService.getSession(sessionId);
-  if (!session?.socket) {
-    return res.status(400).json({
-      success: false,
-      error: 'Session not connected',
-      timestamp: new Date().toISOString()
-    } as ApiResponse);
-  }
+	const session = await whatsAppService.getSession(sessionId)
+	if(!session?.socket) {
+		return res.status(400).json({
+			success: false,
+			error: 'Session not connected',
+			timestamp: new Date().toISOString()
+		} as ApiResponse)
+	}
 
-  try {
-    const result = await session.socket.groupParticipantsUpdate(groupId, participants, 'demote');
+	try {
+		const result = await session.socket.groupParticipantsUpdate(groupId, participants, 'demote')
 
-    res.json({
-      success: true,
-      data: result,
-      message: 'Participants demoted successfully',
-      timestamp: new Date().toISOString()
-    } as ApiResponse);
-  } catch (error) {
-    res.status(400).json({
-      success: false,
-      error: error.message,
-      timestamp: new Date().toISOString()
-    } as ApiResponse);
-  }
-}));
+		res.json({
+			success: true,
+			data: result,
+			message: 'Participants demoted successfully',
+			timestamp: new Date().toISOString()
+		} as ApiResponse)
+	} catch(error) {
+		res.status(400).json({
+			success: false,
+			error: error.message,
+			timestamp: new Date().toISOString()
+		} as ApiResponse)
+	}
+}))
 
 /**
  * @swagger
@@ -463,38 +463,38 @@ router.post('/:sessionId/:groupId/participants/demote', [
  *         description: Group subject updated successfully
  */
 router.put('/:sessionId/:groupId/subject', [
-  param('sessionId').notEmpty(),
-  param('groupId').notEmpty(),
-  body('subject').notEmpty().trim().isLength({ min: 1, max: 100 })
-], sessionMiddleware, handleValidationErrors, asyncHandler(async (req, res) => {
-  const { sessionId, groupId } = req.params;
-  const { subject } = req.body;
+	param('sessionId').notEmpty(),
+	param('groupId').notEmpty(),
+	body('subject').notEmpty().trim().isLength({ min: 1, max: 100 })
+], sessionMiddleware, handleValidationErrors, asyncHandler(async(req, res) => {
+	const { sessionId, groupId } = req.params
+	const { subject } = req.body
 
-  const session = await whatsAppService.getSession(sessionId);
-  if (!session?.socket) {
-    return res.status(400).json({
-      success: false,
-      error: 'Session not connected',
-      timestamp: new Date().toISOString()
-    } as ApiResponse);
-  }
+	const session = await whatsAppService.getSession(sessionId)
+	if(!session?.socket) {
+		return res.status(400).json({
+			success: false,
+			error: 'Session not connected',
+			timestamp: new Date().toISOString()
+		} as ApiResponse)
+	}
 
-  try {
-    await session.socket.groupUpdateSubject(groupId, subject);
+	try {
+		await session.socket.groupUpdateSubject(groupId, subject)
 
-    res.json({
-      success: true,
-      message: 'Group subject updated successfully',
-      timestamp: new Date().toISOString()
-    } as ApiResponse);
-  } catch (error) {
-    res.status(400).json({
-      success: false,
-      error: error.message,
-      timestamp: new Date().toISOString()
-    } as ApiResponse);
-  }
-}));
+		res.json({
+			success: true,
+			message: 'Group subject updated successfully',
+			timestamp: new Date().toISOString()
+		} as ApiResponse)
+	} catch(error) {
+		res.status(400).json({
+			success: false,
+			error: error.message,
+			timestamp: new Date().toISOString()
+		} as ApiResponse)
+	}
+}))
 
 /**
  * @swagger
@@ -529,38 +529,38 @@ router.put('/:sessionId/:groupId/subject', [
  *         description: Group description updated successfully
  */
 router.put('/:sessionId/:groupId/description', [
-  param('sessionId').notEmpty(),
-  param('groupId').notEmpty(),
-  body('description').optional().trim().isLength({ max: 500 })
-], sessionMiddleware, handleValidationErrors, asyncHandler(async (req, res) => {
-  const { sessionId, groupId } = req.params;
-  const { description } = req.body;
+	param('sessionId').notEmpty(),
+	param('groupId').notEmpty(),
+	body('description').optional().trim().isLength({ max: 500 })
+], sessionMiddleware, handleValidationErrors, asyncHandler(async(req, res) => {
+	const { sessionId, groupId } = req.params
+	const { description } = req.body
 
-  const session = await whatsAppService.getSession(sessionId);
-  if (!session?.socket) {
-    return res.status(400).json({
-      success: false,
-      error: 'Session not connected',
-      timestamp: new Date().toISOString()
-    } as ApiResponse);
-  }
+	const session = await whatsAppService.getSession(sessionId)
+	if(!session?.socket) {
+		return res.status(400).json({
+			success: false,
+			error: 'Session not connected',
+			timestamp: new Date().toISOString()
+		} as ApiResponse)
+	}
 
-  try {
-    await session.socket.groupUpdateDescription(groupId, description);
+	try {
+		await session.socket.groupUpdateDescription(groupId, description)
 
-    res.json({
-      success: true,
-      message: 'Group description updated successfully',
-      timestamp: new Date().toISOString()
-    } as ApiResponse);
-  } catch (error) {
-    res.status(400).json({
-      success: false,
-      error: error.message,
-      timestamp: new Date().toISOString()
-    } as ApiResponse);
-  }
-}));
+		res.json({
+			success: true,
+			message: 'Group description updated successfully',
+			timestamp: new Date().toISOString()
+		} as ApiResponse)
+	} catch(error) {
+		res.status(400).json({
+			success: false,
+			error: error.message,
+			timestamp: new Date().toISOString()
+		} as ApiResponse)
+	}
+}))
 
 /**
  * @swagger
@@ -586,35 +586,35 @@ router.put('/:sessionId/:groupId/description', [
  *         description: Left group successfully
  */
 router.post('/:sessionId/:groupId/leave', [
-  param('sessionId').notEmpty(),
-  param('groupId').notEmpty()
-], sessionMiddleware, handleValidationErrors, asyncHandler(async (req, res) => {
-  const { sessionId, groupId } = req.params;
+	param('sessionId').notEmpty(),
+	param('groupId').notEmpty()
+], sessionMiddleware, handleValidationErrors, asyncHandler(async(req, res) => {
+	const { sessionId, groupId } = req.params
 
-  const session = await whatsAppService.getSession(sessionId);
-  if (!session?.socket) {
-    return res.status(400).json({
-      success: false,
-      error: 'Session not connected',
-      timestamp: new Date().toISOString()
-    } as ApiResponse);
-  }
+	const session = await whatsAppService.getSession(sessionId)
+	if(!session?.socket) {
+		return res.status(400).json({
+			success: false,
+			error: 'Session not connected',
+			timestamp: new Date().toISOString()
+		} as ApiResponse)
+	}
 
-  try {
-    await session.socket.groupLeave(groupId);
+	try {
+		await session.socket.groupLeave(groupId)
 
-    res.json({
-      success: true,
-      message: 'Left group successfully',
-      timestamp: new Date().toISOString()
-    } as ApiResponse);
-  } catch (error) {
-    res.status(400).json({
-      success: false,
-      error: error.message,
-      timestamp: new Date().toISOString()
-    } as ApiResponse);
-  }
-}));
+		res.json({
+			success: true,
+			message: 'Left group successfully',
+			timestamp: new Date().toISOString()
+		} as ApiResponse)
+	} catch(error) {
+		res.status(400).json({
+			success: false,
+			error: error.message,
+			timestamp: new Date().toISOString()
+		} as ApiResponse)
+	}
+}))
 
-export default router;
+export default router

@@ -28,8 +28,8 @@ export const jidDecode = (jid: string | undefined): FullJid | undefined => {
 		return undefined
 	}
 
-	const server = jid!.slice(sepIdx + 1)
-	const userCombined = jid!.slice(0, sepIdx)
+	const server = jid.slice(sepIdx + 1)
+	const userCombined = jid.slice(0, sepIdx)
 
 	const [userAgent, device] = userCombined.split(':')
 	const user = userAgent.split('_')[0]

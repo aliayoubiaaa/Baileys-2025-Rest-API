@@ -3,7 +3,7 @@ import axios, { AxiosRequestConfig } from 'axios'
 import { exec } from 'child_process'
 import * as Crypto from 'crypto'
 import { once } from 'events'
-import { existsSync, mkdirSync, createReadStream, createWriteStream, promises as fs, WriteStream } from 'fs'
+import { createReadStream, createWriteStream, existsSync, mkdirSync, promises as fs, WriteStream } from 'fs'
 import type { IAudioMetadata } from 'music-metadata'
 import { tmpdir } from 'os'
 import { join } from 'path'
@@ -21,11 +21,11 @@ const getTmpFilesDirectory = () => './temp/'
 const folderTemp = './temp'
 
 try {
-        if(!existsSync(folderTemp)) {
-                mkdirSync(folderTemp)
-        }
-} catch (err) {
-        console.error(err)
+	if(!existsSync(folderTemp)) {
+		mkdirSync(folderTemp)
+	}
+} catch(err) {
+	console.error(err)
 }
 
 const getImageProcessingLibrary = async() => {
@@ -374,7 +374,7 @@ export const encryptedStream = async(
 
 	let fileLength = 0
 	const aes = Crypto.createCipheriv('aes-256-cbc', cipherKey, iv)
-	const hmac = Crypto.createHmac('sha256', macKey!).update(iv)
+	const hmac = Crypto.createHmac('sha256', macKey).update(iv)
 	const sha256Plain = Crypto.createHash('sha256')
 	const sha256Enc = Crypto.createHash('sha256')
 
@@ -480,7 +480,7 @@ export const downloadContentFromMessage = async(
 	type: MediaType,
 	opts: MediaDownloadOptions = { }
 ) => {
-	const downloadUrl = url || getUrlFromDirectPath(directPath!)
+	const downloadUrl = url || getUrlFromDirectPath(directPath)
 	const keys = await getMediaKeys(mediaKey, type)
 
 	return downloadEncryptedContent(downloadUrl, keys, opts)
@@ -539,8 +539,8 @@ export const downloadEncryptedContent = async(
 
 	const pushBytes = (bytes: Buffer, push: (bytes: Buffer) => void) => {
 		if(startByte || endByte) {
-			const start = bytesFetched >= startByte! ? undefined : Math.max(startByte! - bytesFetched, 0)
-			const end = bytesFetched + bytes.length < endByte! ? undefined : Math.max(endByte! - bytesFetched, 0)
+			const start = bytesFetched >= startByte ? undefined : Math.max(startByte - bytesFetched, 0)
+			const end = bytesFetched + bytes.length < endByte ? undefined : Math.max(endByte - bytesFetched, 0)
 
 			push(bytes.slice(start, end))
 
@@ -605,7 +605,7 @@ export function extensionForMediaMessage(message: WAMessageContent) {
 		extension = '.jpeg'
 	} else {
 		const messageContent = message[type] as WAGenericMediaMessage
-		extension = getExtension(messageContent.mimetype!)
+		extension = getExtension(messageContent.mimetype)
 	}
 
 	return extension
@@ -701,12 +701,12 @@ export const encryptMediaRetryRequest = async(
 
 	const iv = Crypto.randomBytes(12)
 	const retryKey = await getMediaRetryKey(mediaKey)
-	const ciphertext = aesEncryptGCM(recpBuffer, retryKey, iv, Buffer.from(key.id!))
+	const ciphertext = aesEncryptGCM(recpBuffer, retryKey, iv, Buffer.from(key.id))
 
 	const req: BinaryNode = {
 		tag: 'receipt',
 		attrs: {
-			id: key.id!,
+			id: key.id,
 			to: jidNormalizedUser(meId),
 			type: 'server-error'
 		},
@@ -725,7 +725,7 @@ export const encryptMediaRetryRequest = async(
 			{
 				tag: 'rmr',
 				attrs: {
-					jid: key.remoteJid!,
+					jid: key.remoteJid,
 					'from_me': (!!key.fromMe).toString(),
 					// @ts-ignore
 					participant: key.participant || undefined
@@ -738,7 +738,7 @@ export const encryptMediaRetryRequest = async(
 }
 
 export const decodeMediaRetryNode = (node: BinaryNode) => {
-	const rmrNode = getBinaryNodeChild(node, 'rmr')!
+	const rmrNode = getBinaryNodeChild(node, 'rmr')
 
 	const event: BaileysEventMap['messages.media-update'][number] = {
 		key: {

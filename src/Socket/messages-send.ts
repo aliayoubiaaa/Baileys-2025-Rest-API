@@ -60,8 +60,8 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 							maxContentLengthBytes: +attrs.maxContentLengthBytes,
 						})
 					),
-					auth: mediaConnNode!.attrs.auth,
-					ttl: +mediaConnNode!.attrs.ttl,
+					auth: mediaConnNode.attrs.auth,
+					ttl: +mediaConnNode.attrs.ttl,
 					fetchDate: new Date()
 				}
 				logger.debug('fetched media conn')
@@ -151,7 +151,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 			const user = jidDecode(jid)?.user
 			jid = jidNormalizedUser(jid)
 			if(useCache) {
-				const devices = userDevicesCache.get<JidWithDevice[]>(user!)
+				const devices = userDevicesCache.get<JidWithDevice[]>(user)
 				if(devices) {
 					deviceResults.push(...devices)
 
@@ -179,7 +179,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 		const result = await sock.executeUSyncQuery(query)
 
 		if(result) {
-			const extracted = extractDeviceJids(result?.list, authState.creds.me!.id, ignoreZeroDevices)
+			const extracted = extractDeviceJids(result?.list, authState.creds.me.id, ignoreZeroDevices)
 			const deviceMap: { [_: string]: JidWithDevice[] } = {}
 
 			for(const item of extracted) {
@@ -327,11 +327,11 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 		message: proto.IMessage,
 		{ messageId: msgId, participant, additionalAttributes, additionalNodes, useUserDevicesCache, useCachedGroupMetadata, statusJidList }: MessageRelayOptions
 	) => {
-		const meId = authState.creds.me!.id
+		const meId = authState.creds.me.id
 
 		let shouldIncludeDeviceIdentity = false
 
-		const { user, server } = jidDecode(jid)!
+		const { user, server } = jidDecode(jid)
 		const statusJid = 'status@broadcast'
 		const isGroup = server === 'g.us'
 		const isStatus = jid === statusJid
@@ -363,7 +363,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 				additionalAttributes = { ...additionalAttributes, 'device_fanout': 'false' }
 			}
 
-			const { user, device } = jidDecode(participant.jid)!
+			const { user, device } = jidDecode(participant.jid)
 			devices.push({ user, device })
 		}
 
@@ -472,7 +472,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 
 					await authState.keys.set({ 'sender-key-memory': { [jid]: senderKeyMap } })
 				} else {
-					const { user: meUser } = jidDecode(meId)!
+					const { user: meUser } = jidDecode(meId)
 
 					if(!participant) {
 						devices.push({ user })
@@ -491,7 +491,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 					const otherJids: string[] = []
 					for(const { user, device } of devices) {
 						const isMe = user === meUser
-						const jid = jidEncode(isMe && isLid ? authState.creds?.me?.lid!.split(':')[0] || user : user, isLid ? 'lid' : 's.whatsapp.net', device)
+						const jid = jidEncode(isMe && isLid ? authState.creds?.me?.lid.split(':')[0] || user : user, isLid ? 'lid' : 's.whatsapp.net', device)
 						if(isMe) {
 							meJids.push(jid)
 						} else {
@@ -561,7 +561,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 					(stanza.content as BinaryNode[]).push({
 						tag: 'device-identity',
 						attrs: { },
-						content: encodeSignedDeviceIdentity(authState.creds.account!, true)
+						content: encodeSignedDeviceIdentity(authState.creds.account, true)
 					})
 
 					logger.debug({ jid }, 'adding device identity')
@@ -673,8 +673,8 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 		getUSyncDevices,
 		updateMediaMessage: async(message: proto.IWebMessageInfo) => {
 			const content = assertMediaContent(message.message)
-			const mediaKey = content.mediaKey!
-			const meId = authState.creds.me!.id
+			const mediaKey = content.mediaKey
+			const meId = authState.creds.me.id
 			const node = await encryptMediaRetryRequest(message.key, mediaKey, meId)
 
 			let error: Error | undefined = undefined
@@ -688,17 +688,17 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 								error = result.error
 							} else {
 								try {
-									const media = await decryptMediaRetryData(result.media!, mediaKey, result.key.id!)
+									const media = await decryptMediaRetryData(result.media, mediaKey, result.key.id)
 									if(media.result !== proto.MediaRetryNotification.ResultType.SUCCESS) {
-										const resultStr = proto.MediaRetryNotification.ResultType[media.result!]
+										const resultStr = proto.MediaRetryNotification.ResultType[media.result]
 										throw new Boom(
 											`Media re-upload failed by device (${resultStr})`,
-											{ data: media, statusCode: getStatusCodeForMediaRetry(media.result!) || 404 }
+											{ data: media, statusCode: getStatusCodeForMediaRetry(media.result) || 404 }
 										)
 									}
 
 									content.directPath = media.directPath
-									content.url = getUrlFromDirectPath(content.directPath!)
+									content.url = getUrlFromDirectPath(content.directPath)
 
 									logger.debug({ directPath: media.directPath, key: result.key }, 'media update successful')
 								} catch(err) {
@@ -727,7 +727,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 			content: AnyMessageContent,
 			options: MiscMessageGenerationOptions = { }
 		) => {
-			const userJid = authState.creds.me!.id
+			const userJid = authState.creds.me.id
 			if(
 				typeof content === 'object' &&
 				'disappearingMessagesInChat' in content &&
@@ -778,7 +778,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 				// required for delete
 				if(isDeleteMsg) {
 					// if the chat is a group, and I am not the author, then delete the message as an admin
-					if(isJidGroup(content.delete?.remoteJid as string) && !content.delete?.fromMe) {
+					if(isJidGroup(content.delete?.remoteJid) && !content.delete?.fromMe) {
 						additionalAttributes.edit = '8'
 					} else {
 						additionalAttributes.edit = '7'
@@ -800,7 +800,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 					console.warn('cachedGroupMetadata in sendMessage are deprecated, now cachedGroupMetadata is part of the socket config.')
 				}
 
-				await relayMessage(jid, fullMsg.message!, { messageId: fullMsg.key.id!, useCachedGroupMetadata: options.useCachedGroupMetadata, additionalAttributes, statusJidList: options.statusJidList, additionalNodes })
+				await relayMessage(jid, fullMsg.message, { messageId: fullMsg.key.id, useCachedGroupMetadata: options.useCachedGroupMetadata, additionalAttributes, statusJidList: options.statusJidList, additionalNodes })
 				if(config.emitOwnEvents) {
 					process.nextTick(() => {
 						processingMutex.mutex(() => (

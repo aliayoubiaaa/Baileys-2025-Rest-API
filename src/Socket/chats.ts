@@ -228,7 +228,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
 			throw new Boom('Illegal no-jid profile update. Please specify either your ID or the ID of the chat you wish to update')
 		}
 
-		if(jidNormalizedUser(jid) !== jidNormalizedUser(authState.creds.me!.id)) {
+		if(jidNormalizedUser(jid) !== jidNormalizedUser(authState.creds.me.id)) {
 			targetJid = jidNormalizedUser(jid) // in case it is someone other than us
 		}
 
@@ -258,7 +258,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
 			throw new Boom('Illegal no-jid profile update. Please specify either your ID or the ID of the chat you wish to update')
 		}
 
-		if(jidNormalizedUser(jid) !== jidNormalizedUser(authState.creds.me!.id)) {
+		if(jidNormalizedUser(jid) !== jidNormalizedUser(authState.creds.me.id)) {
 			targetJid = jidNormalizedUser(jid) // in case it is someone other than us
 		}
 
@@ -405,7 +405,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
 				processSyncAction(
 					mutation,
 					ev,
-					authState.creds.me!,
+					authState.creds.me,
 					isInitialSync ? { accountSettings: authState.creds.accountSettings } : undefined,
 					logger
 				)
@@ -525,7 +525,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
 						} catch(error) {
 							// if retry attempts overshoot
 							// or key not found
-							const isIrrecoverableError = attemptsMap[name]! >= MAX_SYNC_ATTEMPTS
+							const isIrrecoverableError = attemptsMap[name] >= MAX_SYNC_ATTEMPTS
 								|| error.output?.statusCode === 404
 								|| error.name === 'TypeError'
 							logger.info(
@@ -576,7 +576,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
 	}
 
 	const sendPresenceUpdate = async(type: WAPresence, toJid?: string) => {
-		const me = authState.creds.me!
+		const me = authState.creds.me
 		if(type === 'available' || type === 'unavailable') {
 			if(!me.name) {
 				logger.warn('no name present, ignoring presence update request...')
@@ -597,7 +597,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
 				tag: 'chatstate',
 				attrs: {
 					from: me.id,
-					to: toJid!,
+					to: toJid,
 				},
 				content: [
 					{
@@ -740,8 +740,8 @@ export const makeChatsSocket = (config: SocketConfig) => {
 			const { onMutation } = newAppStateChunkHandler(false)
 			const { mutationMap } = await decodePatches(
 				name,
-				[{ ...encodeResult!.patch, version: { version: encodeResult!.state.version }, }],
-				initial!,
+				[{ ...encodeResult.patch, version: { version: encodeResult.state.version }, }],
+				initial,
 				getAppStateSyncKey,
 				config.options,
 				undefined,
@@ -883,24 +883,24 @@ export const makeChatsSocket = (config: SocketConfig) => {
 		ev.emit('messages.upsert', { messages: [msg], type })
 
 		if(!!msg.pushName) {
-			let jid = msg.key.fromMe ? authState.creds.me!.id : (msg.key.participant || msg.key.remoteJid)
-			jid = jidNormalizedUser(jid!)
+			let jid = msg.key.fromMe ? authState.creds.me.id : (msg.key.participant || msg.key.remoteJid)
+			jid = jidNormalizedUser(jid)
 
 			if(!msg.key.fromMe) {
-				ev.emit('contacts.update', [{ id: jid, notify: msg.pushName, verifiedName: msg.verifiedBizName! }])
+				ev.emit('contacts.update', [{ id: jid, notify: msg.pushName, verifiedName: msg.verifiedBizName }])
 			}
 
 			// update our pushname too
 			if(msg.key.fromMe && msg.pushName && authState.creds.me?.name !== msg.pushName) {
-				ev.emit('creds.update', { me: { ...authState.creds.me!, name: msg.pushName } })
+				ev.emit('creds.update', { me: { ...authState.creds.me, name: msg.pushName } })
 			}
 		}
 
-		const historyMsg = getHistoryMsg(msg.message!)
+		const historyMsg = getHistoryMsg(msg.message)
 		const shouldProcessHistoryMsg = historyMsg
 			? (
 				shouldSyncHistoryMessage(historyMsg)
-				&& PROCESSABLE_HISTORY_TYPES.includes(historyMsg.syncType!)
+				&& PROCESSABLE_HISTORY_TYPES.includes(historyMsg.syncType)
 			)
 			: false
 
@@ -961,7 +961,7 @@ export const makeChatsSocket = (config: SocketConfig) => {
 	ws.on('CB:chatstate', handlePresenceUpdate)
 
 	ws.on('CB:ib,,dirty', async(node: BinaryNode) => {
-		const { attrs } = getBinaryNodeChild(node, 'dirty')!
+		const { attrs } = getBinaryNodeChild(node, 'dirty')
 		const type = attrs.type
 		switch (type) {
 		case 'account_sync':

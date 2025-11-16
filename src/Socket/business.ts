@@ -190,7 +190,7 @@ export const makeBusinessSocket = (config: SocketConfig) => {
 		const productCatalogEditNode = getBinaryNodeChild(result, 'product_catalog_edit')
 		const productNode = getBinaryNodeChild(productCatalogEditNode, 'product')
 
-		return parseProductNode(productNode!)
+		return parseProductNode(productNode)
 	}
 
 	const productCreate = async(create: ProductCreate) => {
@@ -230,7 +230,7 @@ export const makeBusinessSocket = (config: SocketConfig) => {
 		const productCatalogAddNode = getBinaryNodeChild(result, 'product_catalog_add')
 		const productNode = getBinaryNodeChild(productCatalogAddNode, 'product')
 
-		return parseProductNode(productNode!)
+		return parseProductNode(productNode)
 	}
 
 	const productDelete = async(productIds: string[]) => {

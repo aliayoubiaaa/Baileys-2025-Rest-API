@@ -32,16 +32,16 @@ const REAL_MSG_REQ_ME_STUB_TYPES = new Set([
 /** Cleans a received message to further processing */
 export const cleanMessage = (message: proto.IWebMessageInfo, meId: string) => {
 	// ensure remoteJid and participant doesn't have device or agent in it
-	message.key.remoteJid = jidNormalizedUser(message.key.remoteJid!)
+	message.key.remoteJid = jidNormalizedUser(message.key.remoteJid)
 	message.key.participant = message.key.participant ? jidNormalizedUser(message.key.participant) : undefined
 	const content = normalizeMessageContent(message.message)
 	// if the message has a reaction, ensure fromMe & remoteJid are from our perspective
 	if(content?.reactionMessage) {
-		normaliseKey(content.reactionMessage.key!)
+		normaliseKey(content.reactionMessage.key)
 	}
 
 	if(content?.pollUpdateMessage) {
-		normaliseKey(content.pollUpdateMessage.pollCreationMessageKey!)
+		normaliseKey(content.pollUpdateMessage.pollCreationMessageKey)
 	}
 
 	function normaliseKey(msgKey: proto.IMessageKey) {
@@ -51,7 +51,7 @@ export const cleanMessage = (message: proto.IWebMessageInfo, meId: string) => {
 			// if the sender believed the message being reacted to is not from them
 			// we've to correct the key to be from them, or some other participant
 			msgKey.fromMe = !msgKey.fromMe
-				? areJidsSameUser(msgKey.participant || msgKey.remoteJid!, meId)
+				? areJidsSameUser(msgKey.participant || msgKey.remoteJid, meId)
 				// if the message being reacted to, was from them
 				// fromMe automatically becomes false
 				: false
@@ -68,9 +68,9 @@ export const isRealMessage = (message: proto.IWebMessageInfo, meId: string) => {
 	const hasSomeContent = !!getContentType(normalizedContent)
 	return (
 		!!normalizedContent
-		|| REAL_MSG_STUB_TYPES.has(message.messageStubType!)
+		|| REAL_MSG_STUB_TYPES.has(message.messageStubType)
 		|| (
-			REAL_MSG_REQ_ME_STUB_TYPES.has(message.messageStubType!)
+			REAL_MSG_REQ_ME_STUB_TYPES.has(message.messageStubType)
 			&& message.messageStubParameters?.some(p => areJidsSameUser(meId, p))
 		)
 	)
@@ -90,14 +90,14 @@ export const shouldIncrementChatUnread = (message: proto.IWebMessageInfo) => (
  */
 export const getChatId = ({ remoteJid, participant, fromMe }: proto.IMessageKey) => {
 	if(
-		isJidBroadcast(remoteJid!)
-		&& !isJidStatusBroadcast(remoteJid!)
+		isJidBroadcast(remoteJid)
+		&& !isJidStatusBroadcast(remoteJid)
 		&& !fromMe
 	) {
-		return participant!
+		return participant
 	}
 
-	return remoteJid!
+	return remoteJid
 }
 
 type PollContext = {
@@ -140,7 +140,7 @@ export function decryptPollVote(
 	const decKey = hmacSign(sign, key0, 'sha256')
 	const aad = toBinary(`${pollMsgId}\u0000${voterJid}`)
 
-	const decrypted = aesDecryptGCM(encPayload!, decKey, encIv!, aad)
+	const decrypted = aesDecryptGCM(encPayload, decKey, encIv, aad)
 	return proto.Message.PollVoteMessage.decode(decrypted)
 
 	function toBinary(txt: string) {
@@ -160,7 +160,7 @@ const processMessage = async(
 		options
 	}: ProcessMessageContext
 ) => {
-	const meId = creds.me!.id
+	const meId = creds.me.id
 	const { accountSettings } = creds
 
 	const chat: Partial<Chat> = { id: jidNormalizedUser(getChatId(message.key)) }
@@ -191,7 +191,7 @@ const processMessage = async(
 	if(protocolMsg) {
 		switch (protocolMsg.type) {
 		case proto.Message.ProtocolMessage.Type.HISTORY_SYNC_NOTIFICATION:
-			const histNotification = protocolMsg.historySyncNotification!
+			const histNotification = protocolMsg.historySyncNotification
 			const process = shouldProcessHistoryMsg
 			const isLatest = !creds.processedHistoryMessages?.length
 
@@ -229,17 +229,17 @@ const processMessage = async(
 
 			break
 		case proto.Message.ProtocolMessage.Type.APP_STATE_SYNC_KEY_SHARE:
-			const keys = protocolMsg.appStateSyncKeyShare!.keys
+			const keys = protocolMsg.appStateSyncKeyShare.keys
 			if(keys?.length) {
 				let newAppStateSyncKeyId = ''
 				await keyStore.transaction(
 					async() => {
 						const newKeys: string[] = []
 						for(const { keyData, keyId } of keys) {
-							const strKeyId = Buffer.from(keyId!.keyId!).toString('base64')
+							const strKeyId = Buffer.from(keyId.keyId).toString('base64')
 							newKeys.push(strKeyId)
 
-							await keyStore.set({ 'app-state-sync-key': { [strKeyId]: keyData! } })
+							await keyStore.set({ 'app-state-sync-key': { [strKeyId]: keyData } })
 
 							newAppStateSyncKeyId = strKeyId
 						}
@@ -262,7 +262,7 @@ const processMessage = async(
 				{
 					key: {
 						...message.key,
-						id: protocolMsg.key!.id
+						id: protocolMsg.key.id
 					},
 					update: { message: null, messageStubType: WAMessageStubType.REVOKE, key: message.key }
 				}
@@ -275,22 +275,22 @@ const processMessage = async(
 			})
 			break
 		case proto.Message.ProtocolMessage.Type.PEER_DATA_OPERATION_REQUEST_RESPONSE_MESSAGE:
-			const response = protocolMsg.peerDataOperationRequestResponseMessage!
+			const response = protocolMsg.peerDataOperationRequestResponseMessage
 			if(response) {
-				placeholderResendCache?.del(response.stanzaId!)
+				placeholderResendCache?.del(response.stanzaId)
 				// TODO: IMPLEMENT HISTORY SYNC ETC (sticker uploads etc.).
 				const { peerDataOperationResult } = response
-				for(const result of peerDataOperationResult!) {
+				for(const result of peerDataOperationResult) {
 					const { placeholderMessageResendResponse: retryResponse } = result
 					//eslint-disable-next-line max-depth
 					if(retryResponse) {
-						const webMessageInfo = proto.WebMessageInfo.decode(retryResponse.webMessageInfoBytes!)
+						const webMessageInfo = proto.WebMessageInfo.decode(retryResponse.webMessageInfoBytes)
 						// wait till another upsert event is available, don't want it to be part of the PDO response message
 						setTimeout(() => {
 							ev.emit('messages.upsert', {
 								messages: [webMessageInfo],
 								type: 'notify',
-								requestId: response.stanzaId!
+								requestId: response.stanzaId
 							})
 						}, 500)
 					}
@@ -326,21 +326,21 @@ const processMessage = async(
 		}
 		ev.emit('messages.reaction', [{
 			reaction,
-			key: content.reactionMessage?.key!,
+			key: content.reactionMessage?.key,
 		}])
 	} else if(message.messageStubType) {
-		const jid = message.key?.remoteJid!
+		const jid = message.key?.remoteJid
 		//let actor = whatsappID (message.participant)
 		let participants: string[]
 		const emitParticipantsUpdate = (action: ParticipantAction) => (
-			ev.emit('group-participants.update', { id: jid, author: message.participant!, participants, action })
+			ev.emit('group-participants.update', { id: jid, author: message.participant, participants, action })
 		)
 		const emitGroupUpdate = (update: Partial<GroupMetadata>) => {
 			ev.emit('groups.update', [{ id: jid, ...update, author: message.participant ?? undefined }])
 		}
 
 		const emitGroupRequestJoin = (participant: string, action: RequestJoinAction, method: RequestJoinMethod) => {
-			ev.emit('group.join-request', { id: jid, author: message.participant!, participant, action, method: method! })
+			ev.emit('group.join-request', { id: jid, author: message.participant, participant, action, method: method })
 		}
 
 		const participantsIncludesMe = () => participants.find(jid => areJidsSameUser(meId, jid))
@@ -409,7 +409,7 @@ const processMessage = async(
 			emitGroupUpdate({ joinApprovalMode: approvalMode === 'on' })
 			break
 		case WAMessageStubType.GROUP_MEMBERSHIP_JOIN_APPROVAL_REQUEST_NON_ADMIN_ADD:
-			const participant = message.messageStubParameters?.[0] as string
+			const participant = message.messageStubParameters?.[0]
 			const action = message.messageStubParameters?.[1] as RequestJoinAction
 			const method = message.messageStubParameters?.[2] as RequestJoinMethod
 			emitGroupRequestJoin(participant, action, method)

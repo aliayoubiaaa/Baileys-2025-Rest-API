@@ -172,7 +172,7 @@ export const makeSocket = (config: SocketConfig) => {
 			})
 
 		if(sendMsg) {
-			sendRawMessage(sendMsg).catch(onClose!)
+			sendRawMessage(sendMsg).catch(onClose)
 		}
 
 		return result
@@ -202,9 +202,9 @@ export const makeSocket = (config: SocketConfig) => {
 
 			return result as any
 		} finally {
-			ws.off(`TAG:${msgId}`, onRecv!)
-			ws.off('close', onErr!) // if the socket closes, you'll never receive the message
-			ws.off('error', onErr!)
+			ws.off(`TAG:${msgId}`, onRecv)
+			ws.off('close', onErr) // if the socket closes, you'll never receive the message
+			ws.off('error', onErr)
 		}
 	}
 
@@ -284,7 +284,7 @@ export const makeSocket = (config: SocketConfig) => {
 			]
 		})
 		const countChild = getBinaryNodeChild(result, 'count')
-		return +countChild!.attrs.value
+		return +countChild.attrs.value
 	}
 
 	/** generates and uploads a set of pre-keys to the server */
@@ -547,7 +547,7 @@ export const makeSocket = (config: SocketConfig) => {
 	async function generatePairingKey() {
 		const salt = randomBytes(32)
 		const randomIv = randomBytes(16)
-		const key = await derivePairingCodeKey(authState.creds.pairingCode!, salt)
+		const key = await derivePairingCodeKey(authState.creds.pairingCode, salt)
 		const ciphered = aesEncryptCTR(authState.creds.pairingEphemeralKeyPair.public, key, randomIv)
 		return Buffer.concat([salt, randomIv, ciphered])
 	}
@@ -654,7 +654,7 @@ export const makeSocket = (config: SocketConfig) => {
 		logger.info('opened connection to WA')
 		clearTimeout(qrTimer) // will never happen in all likelyhood -- but just in case WA sends success on first try
 
-		ev.emit('creds.update', { me: { ...authState.creds.me!, lid: node.attrs.lid } })
+		ev.emit('creds.update', { me: { ...authState.creds.me, lid: node.attrs.lid } })
 
 		ev.emit('connection.update', { connection: 'open' })
 	})
@@ -728,7 +728,7 @@ export const makeSocket = (config: SocketConfig) => {
 			logger.debug({ name }, 'updated pushName')
 			sendNode({
 				tag: 'presence',
-				attrs: { name: name! }
+				attrs: { name: name }
 			})
 				.catch(err => {
 					logger.warn({ trace: err.stack }, 'error in sending presence update on name change')

@@ -1,13 +1,13 @@
-import { Router } from 'express';
-import { body, param, query } from 'express-validator';
-import { handleValidationErrors, asyncHandler } from '../middleware/errorHandler';
-import { sessionMiddleware } from '../middleware/auth';
-import { whatsAppService } from '../app';
-import { DatabaseService } from '../services/DatabaseService';
-import { ApiResponse, SessionStatus } from '../Types/api';
+import { Router } from 'express'
+import { body, param, query } from 'express-validator'
+import { whatsAppService } from '../app'
+import { sessionMiddleware } from '../middleware/auth'
+import { asyncHandler, handleValidationErrors } from '../middleware/errorHandler'
+import { DatabaseService } from '../services/DatabaseService'
+import { ApiResponse, SessionStatus } from '../Types/api'
 
-const router = Router();
-const dbService = new DatabaseService();
+const router = Router()
+const dbService = new DatabaseService()
 
 /**
  * @swagger
@@ -21,26 +21,26 @@ const dbService = new DatabaseService();
  *       200:
  *         description: Sessions retrieved successfully
  */
-router.get('/', asyncHandler(async (req, res) => {
-  const sessions = await dbService.getUserSessions(req.user!.id);
-  
-  // Enhance with real-time status from WhatsApp service
-  const enhancedSessions = await Promise.all(sessions.map(async session => {
-    const liveSession = await whatsAppService.getSession(session.sessionId);
-    return {
-      ...session,
-      liveStatus: liveSession?.status || SessionStatus.DISCONNECTED,
-      qrCode: liveSession?.qrCode,
-      pairingCode: liveSession?.pairingCode
-    };
-  }));
+router.get('/', asyncHandler(async(req, res) => {
+	const sessions = await dbService.getUserSessions(req.user!.id)
 
-  res.json({
-    success: true,
-    data: enhancedSessions,
-    timestamp: new Date().toISOString()
-  } as ApiResponse);
-}));
+	// Enhance with real-time status from WhatsApp service
+	const enhancedSessions = await Promise.all(sessions.map(async session => {
+		const liveSession = await whatsAppService.getSession(session.sessionId)
+		return {
+			...session,
+			liveStatus: liveSession?.status || SessionStatus.DISCONNECTED,
+			qrCode: liveSession?.qrCode,
+			pairingCode: liveSession?.pairingCode
+		}
+	}))
+
+	res.json({
+		success: true,
+		data: enhancedSessions,
+		timestamp: new Date().toISOString()
+	} as ApiResponse)
+}))
 
 /**
  * @swagger
@@ -71,31 +71,31 @@ router.get('/', asyncHandler(async (req, res) => {
  *         description: Session already exists
  */
 router.post('/', [
-  body('sessionId').notEmpty().trim().isLength({ min: 1, max: 50 }),
-  body('usePairingCode').optional().isBoolean()
-], handleValidationErrors, asyncHandler(async (req, res) => {
-  const { sessionId, usePairingCode = false } = req.body;
+	body('sessionId').notEmpty().trim().isLength({ min: 1, max: 50 }),
+	body('usePairingCode').optional().isBoolean()
+], handleValidationErrors, asyncHandler(async(req, res) => {
+	const { sessionId, usePairingCode = false } = req.body
 
-  // Check if session already exists
-  const existingSession = await dbService.getSession(sessionId);
-  if (existingSession) {
-    return res.status(400).json({
-      success: false,
-      error: 'Session already exists',
-      timestamp: new Date().toISOString()
-    } as ApiResponse);
-  }
+	// Check if session already exists
+	const existingSession = await dbService.getSession(sessionId)
+	if(existingSession) {
+		return res.status(400).json({
+			success: false,
+			error: 'Session already exists',
+			timestamp: new Date().toISOString()
+		} as ApiResponse)
+	}
 
-  // Create session
-  const session = await whatsAppService.createSession(sessionId, req.user!.id, usePairingCode);
+	// Create session
+	const session = await whatsAppService.createSession(sessionId, req.user!.id, usePairingCode)
 
-  res.status(201).json({
-    success: true,
-    data: session,
-    message: 'Session created successfully',
-    timestamp: new Date().toISOString()
-  } as ApiResponse);
-}));
+	res.status(201).json({
+		success: true,
+		data: session,
+		message: 'Session created successfully',
+		timestamp: new Date().toISOString()
+	} as ApiResponse)
+}))
 
 /**
  * @swagger
@@ -118,34 +118,34 @@ router.post('/', [
  *         description: Session not found
  */
 router.get('/:sessionId', [
-  param('sessionId').notEmpty()
-], sessionMiddleware, handleValidationErrors, asyncHandler(async (req, res) => {
-  const { sessionId } = req.params;
-  
-  const dbSession = await dbService.getSession(sessionId);
-  const liveSession = await whatsAppService.getSession(sessionId);
+	param('sessionId').notEmpty()
+], sessionMiddleware, handleValidationErrors, asyncHandler(async(req, res) => {
+	const { sessionId } = req.params
 
-  if (!dbSession) {
-    return res.status(404).json({
-      success: false,
-      error: 'Session not found',
-      timestamp: new Date().toISOString()
-    } as ApiResponse);
-  }
+	const dbSession = await dbService.getSession(sessionId)
+	const liveSession = await whatsAppService.getSession(sessionId)
 
-  const sessionData = {
-    ...dbSession,
-    liveStatus: liveSession?.status || SessionStatus.DISCONNECTED,
-    qrCode: liveSession?.qrCode,
-    pairingCode: liveSession?.pairingCode
-  };
+	if(!dbSession) {
+		return res.status(404).json({
+			success: false,
+			error: 'Session not found',
+			timestamp: new Date().toISOString()
+		} as ApiResponse)
+	}
 
-  res.json({
-    success: true,
-    data: sessionData,
-    timestamp: new Date().toISOString()
-  } as ApiResponse);
-}));
+	const sessionData = {
+		...dbSession,
+		liveStatus: liveSession?.status || SessionStatus.DISCONNECTED,
+		qrCode: liveSession?.qrCode,
+		pairingCode: liveSession?.pairingCode
+	}
+
+	res.json({
+		success: true,
+		data: sessionData,
+		timestamp: new Date().toISOString()
+	} as ApiResponse)
+}))
 
 /**
  * @swagger
@@ -168,18 +168,18 @@ router.get('/:sessionId', [
  *         description: Session not found
  */
 router.delete('/:sessionId', [
-  param('sessionId').notEmpty()
-], sessionMiddleware, handleValidationErrors, asyncHandler(async (req, res) => {
-  const { sessionId } = req.params;
+	param('sessionId').notEmpty()
+], sessionMiddleware, handleValidationErrors, asyncHandler(async(req, res) => {
+	const { sessionId } = req.params
 
-  await whatsAppService.deleteSession(sessionId);
+	await whatsAppService.deleteSession(sessionId)
 
-  res.json({
-    success: true,
-    message: 'Session deleted successfully',
-    timestamp: new Date().toISOString()
-  } as ApiResponse);
-}));
+	res.json({
+		success: true,
+		message: 'Session deleted successfully',
+		timestamp: new Date().toISOString()
+	} as ApiResponse)
+}))
 
 /**
  * @swagger
@@ -202,29 +202,29 @@ router.delete('/:sessionId', [
  *         description: Session not found or QR code not available
  */
 router.get('/:sessionId/qr', [
-  param('sessionId').notEmpty()
-], sessionMiddleware, handleValidationErrors, asyncHandler(async (req, res) => {
-  const { sessionId } = req.params;
-  
-  const session = await whatsAppService.getSession(sessionId);
-  
-  if (!session || !session.qrCode) {
-    return res.status(404).json({
-      success: false,
-      error: 'QR code not available',
-      timestamp: new Date().toISOString()
-    } as ApiResponse);
-  }
+	param('sessionId').notEmpty()
+], sessionMiddleware, handleValidationErrors, asyncHandler(async(req, res) => {
+	const { sessionId } = req.params
 
-  res.json({
-    success: true,
-    data: {
-      qrCode: session.qrCode,
-      status: session.status
-    },
-    timestamp: new Date().toISOString()
-  } as ApiResponse);
-}));
+	const session = await whatsAppService.getSession(sessionId)
+
+	if(!session?.qrCode) {
+		return res.status(404).json({
+			success: false,
+			error: 'QR code not available',
+			timestamp: new Date().toISOString()
+		} as ApiResponse)
+	}
+
+	res.json({
+		success: true,
+		data: {
+			qrCode: session.qrCode,
+			status: session.status
+		},
+		timestamp: new Date().toISOString()
+	} as ApiResponse)
+}))
 
 /**
  * @swagger
@@ -259,33 +259,33 @@ router.get('/:sessionId/qr', [
  *         description: Invalid phone number or session not ready
  */
 router.post('/:sessionId/pairing-code', [
-  param('sessionId').notEmpty(),
-  body('phoneNumber').isMobilePhone('any').withMessage('Invalid phone number')
-], sessionMiddleware, handleValidationErrors, asyncHandler(async (req, res) => {
-  const { sessionId } = req.params;
-  const { phoneNumber } = req.body;
+	param('sessionId').notEmpty(),
+	body('phoneNumber').isMobilePhone('any').withMessage('Invalid phone number')
+], sessionMiddleware, handleValidationErrors, asyncHandler(async(req, res) => {
+	const { sessionId } = req.params
+	const { phoneNumber } = req.body
 
-  try {
-    const pairingCode = await whatsAppService.requestPairingCode(sessionId, phoneNumber);
+	try {
+		const pairingCode = await whatsAppService.requestPairingCode(sessionId, phoneNumber)
 
-    res.json({
-      success: true,
-      data: {
-        pairingCode,
-        phoneNumber,
-        sessionId
-      },
-      message: 'Pairing code generated successfully',
-      timestamp: new Date().toISOString()
-    } as ApiResponse);
-  } catch (error) {
-    res.status(400).json({
-      success: false,
-      error: error.message,
-      timestamp: new Date().toISOString()
-    } as ApiResponse);
-  }
-}));
+		res.json({
+			success: true,
+			data: {
+				pairingCode,
+				phoneNumber,
+				sessionId
+			},
+			message: 'Pairing code generated successfully',
+			timestamp: new Date().toISOString()
+		} as ApiResponse)
+	} catch(error) {
+		res.status(400).json({
+			success: false,
+			error: error.message,
+			timestamp: new Date().toISOString()
+		} as ApiResponse)
+	}
+}))
 
 /**
  * @swagger
@@ -306,26 +306,26 @@ router.post('/:sessionId/pairing-code', [
  *         description: Session status retrieved successfully
  */
 router.get('/:sessionId/status', [
-  param('sessionId').notEmpty()
-], sessionMiddleware, handleValidationErrors, asyncHandler(async (req, res) => {
-  const { sessionId } = req.params;
-  
-  const session = await whatsAppService.getSession(sessionId);
-  const dbSession = await dbService.getSession(sessionId);
+	param('sessionId').notEmpty()
+], sessionMiddleware, handleValidationErrors, asyncHandler(async(req, res) => {
+	const { sessionId } = req.params
 
-  res.json({
-    success: true,
-    data: {
-      sessionId,
-      status: session?.status || SessionStatus.DISCONNECTED,
-      phoneNumber: session?.phoneNumber || dbSession?.phoneNumber,
-      name: session?.name || dbSession?.name,
-      lastSeen: session?.lastSeen || dbSession?.lastSeen,
-      isConnected: session?.status === SessionStatus.CONNECTED
-    },
-    timestamp: new Date().toISOString()
-  } as ApiResponse);
-}));
+	const session = await whatsAppService.getSession(sessionId)
+	const dbSession = await dbService.getSession(sessionId)
+
+	res.json({
+		success: true,
+		data: {
+			sessionId,
+			status: session?.status || SessionStatus.DISCONNECTED,
+			phoneNumber: session?.phoneNumber || dbSession?.phoneNumber,
+			name: session?.name || dbSession?.name,
+			lastSeen: session?.lastSeen || dbSession?.lastSeen,
+			isConnected: session?.status === SessionStatus.CONNECTED
+		},
+		timestamp: new Date().toISOString()
+	} as ApiResponse)
+}))
 
 /**
  * @swagger
@@ -346,20 +346,20 @@ router.get('/:sessionId/status', [
  *         description: Session restart initiated
  */
 router.post('/:sessionId/restart', [
-  param('sessionId').notEmpty()
-], sessionMiddleware, handleValidationErrors, asyncHandler(async (req, res) => {
-  const { sessionId } = req.params;
+	param('sessionId').notEmpty()
+], sessionMiddleware, handleValidationErrors, asyncHandler(async(req, res) => {
+	const { sessionId } = req.params
 
-  // Delete and recreate session
-  await whatsAppService.deleteSession(sessionId);
-  const newSession = await whatsAppService.createSession(sessionId, req.user!.id);
+	// Delete and recreate session
+	await whatsAppService.deleteSession(sessionId)
+	const newSession = await whatsAppService.createSession(sessionId, req.user!.id)
 
-  res.json({
-    success: true,
-    data: newSession,
-    message: 'Session restart initiated',
-    timestamp: new Date().toISOString()
-  } as ApiResponse);
-}));
+	res.json({
+		success: true,
+		data: newSession,
+		message: 'Session restart initiated',
+		timestamp: new Date().toISOString()
+	} as ApiResponse)
+}))
 
-export default router;
+export default router

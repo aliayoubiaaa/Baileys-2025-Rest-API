@@ -1,14 +1,14 @@
-import { Router } from 'express';
-import { join } from 'path';
-import { existsSync } from 'fs';
-import { asyncHandler } from '../middleware/errorHandler';
-import { authMiddleware } from '../middleware/auth';
-import { DatabaseService } from '../services/DatabaseService';
-import { whatsAppService } from '../app';
-import { ApiResponse } from '../Types/api';
+import { Router } from 'express'
+import { existsSync } from 'fs'
+import { join } from 'path'
+import { whatsAppService } from '../app'
+import { authMiddleware } from '../middleware/auth'
+import { asyncHandler } from '../middleware/errorHandler'
+import { DatabaseService } from '../services/DatabaseService'
+import { ApiResponse } from '../Types/api'
 
-const router = Router();
-const dbService = new DatabaseService();
+const router = Router()
+const dbService = new DatabaseService()
 
 /**
  * @swagger
@@ -22,15 +22,15 @@ const dbService = new DatabaseService();
  *       200:
  *         description: Dashboard statistics retrieved successfully
  */
-router.get('/stats', authMiddleware, asyncHandler(async (req, res) => {
-  const stats = await dbService.getDashboardStats(req.user!.id);
+router.get('/stats', authMiddleware, asyncHandler(async(req, res) => {
+	const stats = await dbService.getDashboardStats(req.user!.id)
 
-  res.json({
-    success: true,
-    data: stats,
-    timestamp: new Date().toISOString()
-  } as ApiResponse);
-}));
+	res.json({
+		success: true,
+		data: stats,
+		timestamp: new Date().toISOString()
+	} as ApiResponse)
+}))
 
 /**
  * @swagger
@@ -44,37 +44,37 @@ router.get('/stats', authMiddleware, asyncHandler(async (req, res) => {
  *       200:
  *         description: Session metrics retrieved successfully
  */
-router.get('/sessions', authMiddleware, asyncHandler(async (req, res) => {
-  const sessions = await dbService.getUserSessions(req.user!.id);
-  
-  const sessionMetrics = await Promise.all(sessions.map(async session => {
-    const liveSession = await whatsAppService.getSession(session.sessionId);
-    return {
-      sessionId: session.sessionId,
-      status: liveSession?.status || session.status,
-      phoneNumber: session.phoneNumber,
-      name: session.name,
-      lastSeen: session.lastSeen,
-      createdAt: session.createdAt
-    };
-  }));
+router.get('/sessions', authMiddleware, asyncHandler(async(req, res) => {
+	const sessions = await dbService.getUserSessions(req.user!.id)
 
-  res.json({
-    success: true,
-    data: sessionMetrics,
-    timestamp: new Date().toISOString()
-  } as ApiResponse);
-}));
+	const sessionMetrics = await Promise.all(sessions.map(async session => {
+		const liveSession = await whatsAppService.getSession(session.sessionId)
+		return {
+			sessionId: session.sessionId,
+			status: liveSession?.status || session.status,
+			phoneNumber: session.phoneNumber,
+			name: session.name,
+			lastSeen: session.lastSeen,
+			createdAt: session.createdAt
+		}
+	}))
+
+	res.json({
+		success: true,
+		data: sessionMetrics,
+		timestamp: new Date().toISOString()
+	} as ApiResponse)
+}))
 
 // Serve dashboard HTML
 router.get('/', (req, res) => {
-  const dashboardPath = join(__dirname, '../../frontend/dist/index.html');
-  
-  if (existsSync(dashboardPath)) {
-    res.sendFile(dashboardPath);
-  } else {
-    // Fallback simple dashboard
-    res.send(`
+	const dashboardPath = join(__dirname, '../../frontend/dist/index.html')
+
+	if(existsSync(dashboardPath)) {
+		res.sendFile(dashboardPath)
+	} else {
+		// Fallback simple dashboard
+		res.send(`
       <!DOCTYPE html>
       <html lang="en">
       <head>
@@ -251,8 +251,8 @@ X-API-Key: YOUR_API_KEY<br><br>
           </script>
       </body>
       </html>
-    `);
-  }
-});
+    `)
+	}
+})
 
-export default router;
+export default router

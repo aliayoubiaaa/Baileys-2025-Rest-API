@@ -73,9 +73,9 @@ export const parseAndInjectE2ESessions = async(
 ) => {
 	const extractKey = (key: BinaryNode) => (
 		key ? ({
-			keyId: getBinaryNodeChildUInt(key, 'id', 3)!,
-			publicKey: generateSignalPubKey(getBinaryNodeChildBuffer(key, 'value')!),
-			signature: getBinaryNodeChildBuffer(key, 'signature')!,
+			keyId: getBinaryNodeChildUInt(key, 'id', 3),
+			publicKey: generateSignalPubKey(getBinaryNodeChildBuffer(key, 'value')),
+			signature: getBinaryNodeChildBuffer(key, 'signature'),
 		}) : undefined
 	)
 	const nodes = getBinaryNodeChildren(getBinaryNodeChild(node, 'list'), 'user')
@@ -94,19 +94,19 @@ export const parseAndInjectE2ESessions = async(
 		await Promise.all(
 			nodesChunk.map(
 				async node => {
-					const signedKey = getBinaryNodeChild(node, 'skey')!
-					const key = getBinaryNodeChild(node, 'key')!
-					const identity = getBinaryNodeChildBuffer(node, 'identity')!
+					const signedKey = getBinaryNodeChild(node, 'skey')
+					const key = getBinaryNodeChild(node, 'key')
+					const identity = getBinaryNodeChildBuffer(node, 'identity')
 					const jid = node.attrs.jid
 					const registrationId = getBinaryNodeChildUInt(node, 'registration', 4)
 
 					await repository.injectE2ESession({
 						jid,
 						session: {
-							registrationId: registrationId!,
+							registrationId: registrationId,
 							identityKey: generateSignalPubKey(identity),
-							signedPreKey: extractKey(signedKey)!,
-							preKey: extractKey(key)!
+							signedPreKey: extractKey(signedKey),
+							preKey: extractKey(key)
 						}
 					})
 				}
@@ -116,15 +116,15 @@ export const parseAndInjectE2ESessions = async(
 }
 
 export const extractDeviceJids = (result: USyncQueryResultList[], myJid: string, excludeZeroDevices: boolean) => {
-	const { user: myUser, device: myDevice } = jidDecode(myJid)!
+	const { user: myUser, device: myDevice } = jidDecode(myJid)
 
 	const extracted: JidWithDevice[] = []
 
 
 	for(const userResult of result) {
 		const { devices, id } = userResult as { devices: ParsedDeviceInfo, id: string }
-		const { user } = jidDecode(id)!
-		const deviceList = devices?.deviceList as DeviceListData[]
+		const { user } = jidDecode(id)
+		const deviceList = devices?.deviceList
 		if(Array.isArray(deviceList)) {
 			for(const { id: device, keyIndex } of deviceList) {
 				if(

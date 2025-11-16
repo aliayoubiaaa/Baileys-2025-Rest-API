@@ -108,7 +108,7 @@ export const addTransactionCapability = (
 
 					transactionCache[type] ||= {}
 					Object.assign(
-						transactionCache[type]!,
+						transactionCache[type],
 						result
 					)
 				}

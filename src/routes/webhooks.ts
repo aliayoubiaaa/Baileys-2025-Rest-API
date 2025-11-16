@@ -1,13 +1,13 @@
-import { Router } from 'express';
-import { body, param } from 'express-validator';
-import { handleValidationErrors, asyncHandler } from '../middleware/errorHandler';
-import { DatabaseService } from '../services/DatabaseService';
-import { WebhookService } from '../services/WebhookService';
-import { ApiResponse } from '../Types/api';
+import { Router } from 'express'
+import { body, param } from 'express-validator'
+import { asyncHandler, handleValidationErrors } from '../middleware/errorHandler'
+import { DatabaseService } from '../services/DatabaseService'
+import { WebhookService } from '../services/WebhookService'
+import { ApiResponse } from '../Types/api'
 
-const router = Router();
-const dbService = new DatabaseService();
-const webhookService = new WebhookService();
+const router = Router()
+const dbService = new DatabaseService()
+const webhookService = new WebhookService()
 
 /**
  * @swagger
@@ -21,15 +21,15 @@ const webhookService = new WebhookService();
  *       200:
  *         description: Webhooks retrieved successfully
  */
-router.get('/', asyncHandler(async (req, res) => {
-  const webhooks = await dbService.getUserWebhooks(req.user!.id);
+router.get('/', asyncHandler(async(req, res) => {
+	const webhooks = await dbService.getUserWebhooks(req.user!.id)
 
-  res.json({
-    success: true,
-    data: webhooks,
-    timestamp: new Date().toISOString()
-  } as ApiResponse);
-}));
+	res.json({
+		success: true,
+		data: webhooks,
+		timestamp: new Date().toISOString()
+	} as ApiResponse)
+}))
 
 /**
  * @swagger
@@ -63,27 +63,27 @@ router.get('/', asyncHandler(async (req, res) => {
  *         description: Webhook created successfully
  */
 router.post('/', [
-  body('url').isURL(),
-  body('events').isArray({ min: 1 }),
-  body('events.*').isString().notEmpty(),
-  body('secret').optional().isString()
-], handleValidationErrors, asyncHandler(async (req, res) => {
-  const { url, events, secret } = req.body;
+	body('url').isURL(),
+	body('events').isArray({ min: 1 }),
+	body('events.*').isString().notEmpty(),
+	body('secret').optional().isString()
+], handleValidationErrors, asyncHandler(async(req, res) => {
+	const { url, events, secret } = req.body
 
-  const webhook = await dbService.createWebhook({
-    userId: req.user!.id,
-    url,
-    events,
-    secret
-  });
+	const webhook = await dbService.createWebhook({
+		userId: req.user!.id,
+		url,
+		events,
+		secret
+	})
 
-  res.status(201).json({
-    success: true,
-    data: webhook,
-    message: 'Webhook created successfully',
-    timestamp: new Date().toISOString()
-  } as ApiResponse);
-}));
+	res.status(201).json({
+		success: true,
+		data: webhook,
+		message: 'Webhook created successfully',
+		timestamp: new Date().toISOString()
+	} as ApiResponse)
+}))
 
 /**
  * @swagger
@@ -104,18 +104,18 @@ router.post('/', [
  *         description: Webhook deleted successfully
  */
 router.delete('/:webhookId', [
-  param('webhookId').notEmpty()
-], handleValidationErrors, asyncHandler(async (req, res) => {
-  const { webhookId } = req.params;
+	param('webhookId').notEmpty()
+], handleValidationErrors, asyncHandler(async(req, res) => {
+	const { webhookId } = req.params
 
-  await dbService.deleteWebhook(webhookId);
+	await dbService.deleteWebhook(webhookId)
 
-  res.json({
-    success: true,
-    message: 'Webhook deleted successfully',
-    timestamp: new Date().toISOString()
-  } as ApiResponse);
-}));
+	res.json({
+		success: true,
+		message: 'Webhook deleted successfully',
+		timestamp: new Date().toISOString()
+	} as ApiResponse)
+}))
 
 /**
  * @swagger
@@ -136,18 +136,18 @@ router.delete('/:webhookId', [
  *         description: Webhook test completed
  */
 router.post('/:webhookId/test', [
-  param('webhookId').notEmpty()
-], handleValidationErrors, asyncHandler(async (req, res) => {
-  const { webhookId } = req.params;
+	param('webhookId').notEmpty()
+], handleValidationErrors, asyncHandler(async(req, res) => {
+	const { webhookId } = req.params
 
-  const success = await webhookService.testWebhook(webhookId);
+	const success = await webhookService.testWebhook(webhookId)
 
-  res.json({
-    success: true,
-    data: { testSuccess: success },
-    message: success ? 'Webhook test successful' : 'Webhook test failed',
-    timestamp: new Date().toISOString()
-  } as ApiResponse);
-}));
+	res.json({
+		success: true,
+		data: { testSuccess: success },
+		message: success ? 'Webhook test successful' : 'Webhook test failed',
+		timestamp: new Date().toISOString()
+	} as ApiResponse)
+}))
 
-export default router;
+export default router

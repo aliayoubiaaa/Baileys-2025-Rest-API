@@ -1,11 +1,11 @@
-import { Router } from 'express';
-import { param } from 'express-validator';
-import { handleValidationErrors, asyncHandler } from '../middleware/errorHandler';
-import { sessionMiddleware } from '../middleware/auth';
-import { whatsAppService } from '../app';
-import { ApiResponse } from '../Types/api';
+import { Router } from 'express'
+import { param } from 'express-validator'
+import { whatsAppService } from '../app'
+import { sessionMiddleware } from '../middleware/auth'
+import { asyncHandler, handleValidationErrors } from '../middleware/errorHandler'
+import { ApiResponse } from '../Types/api'
 
-const router = Router();
+const router = Router()
 
 /**
  * @swagger
@@ -26,33 +26,33 @@ const router = Router();
  *         description: Business profile retrieved successfully
  */
 router.get('/:sessionId/profile', [
-  param('sessionId').notEmpty()
-], sessionMiddleware, handleValidationErrors, asyncHandler(async (req, res) => {
-  const { sessionId } = req.params;
+	param('sessionId').notEmpty()
+], sessionMiddleware, handleValidationErrors, asyncHandler(async(req, res) => {
+	const { sessionId } = req.params
 
-  const session = await whatsAppService.getSession(sessionId);
-  if (!session?.socket) {
-    return res.status(400).json({
-      success: false,
-      error: 'Session not connected',
-      timestamp: new Date().toISOString()
-    } as ApiResponse);
-  }
+	const session = await whatsAppService.getSession(sessionId)
+	if(!session?.socket) {
+		return res.status(400).json({
+			success: false,
+			error: 'Session not connected',
+			timestamp: new Date().toISOString()
+		} as ApiResponse)
+	}
 
-  try {
-    // This would need to be implemented with proper business profile retrieval
-    res.status(501).json({
-      success: false,
-      error: 'Business profile not yet implemented',
-      timestamp: new Date().toISOString()
-    } as ApiResponse);
-  } catch (error) {
-    res.status(400).json({
-      success: false,
-      error: error.message,
-      timestamp: new Date().toISOString()
-    } as ApiResponse);
-  }
-}));
+	try {
+		// This would need to be implemented with proper business profile retrieval
+		res.status(501).json({
+			success: false,
+			error: 'Business profile not yet implemented',
+			timestamp: new Date().toISOString()
+		} as ApiResponse)
+	} catch(error) {
+		res.status(400).json({
+			success: false,
+			error: error.message,
+			timestamp: new Date().toISOString()
+		} as ApiResponse)
+	}
+}))
 
-export default router;
+export default router

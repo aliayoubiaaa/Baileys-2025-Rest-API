@@ -105,9 +105,10 @@ export const encodeBigEndian = (e: number, t = 4) => {
 }
 
 export const toNumber = (t: Long | number | null | undefined): number => {
-	if (typeof t === 'object' && t) {
+	if(typeof t === 'object' && t) {
 		return ('toNumber' in t ? t.toNumber() : Number((t as any).low))
 	}
+
 	return Number(t) || 0
 }
 
@@ -332,7 +333,7 @@ const STATUS_MAP: { [_: string]: proto.WebMessageInfo.Status } = {
  * @param type type from receipt
  */
 export const getStatusFromReceiptType = (type: string | undefined) => {
-	const status = STATUS_MAP[type!]
+	const status = STATUS_MAP[type]
 	if(typeof type === 'undefined') {
 		return proto.WebMessageInfo.Status.DELIVERY_ACK
 	}

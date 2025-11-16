@@ -137,7 +137,7 @@ export const prepareWAMessageMedia = async(
 
 	// check for cache hit
 	if(cacheableKey) {
-		const mediaBuff = options.mediaCache!.get<Buffer>(cacheableKey)
+		const mediaBuff = options.mediaCache.get<Buffer>(cacheableKey)
 		if(mediaBuff) {
 			logger?.debug({ cacheableKey }, 'got media cache hit')
 
@@ -189,7 +189,7 @@ export const prepareWAMessageMedia = async(
 					const {
 						thumbnail,
 						originalImageDimensions
-					} = await generateThumbnail(originalFilePath!, mediaType as 'image' | 'video', options)
+					} = await generateThumbnail(originalFilePath, mediaType as 'image' | 'video', options)
 					uploadData.jpegThumbnail = thumbnail
 					if(!uploadData.width && originalImageDimensions) {
 						uploadData.width = originalImageDimensions.width
@@ -201,12 +201,12 @@ export const prepareWAMessageMedia = async(
 				}
 
 				if(requiresDurationComputation) {
-					uploadData.seconds = await getAudioDuration(originalFilePath!)
+					uploadData.seconds = await getAudioDuration(originalFilePath)
 					logger?.debug('computed audio duration')
 				}
 
 				if(requiresWaveformProcessing) {
-					uploadData.waveform = await getAudioWaveform(originalFilePath!, logger)
+					uploadData.waveform = await getAudioWaveform(originalFilePath, logger)
 					logger?.debug('processed waveform')
 				}
 
@@ -257,7 +257,7 @@ export const prepareWAMessageMedia = async(
 
 	if(cacheableKey) {
 		logger?.debug({ cacheableKey }, 'set cache')
-		options.mediaCache!.set(cacheableKey, WAProto.Message.encode(obj).finish())
+		options.mediaCache.set(cacheableKey, WAProto.Message.encode(obj).finish())
 	}
 
 	return obj
@@ -294,7 +294,7 @@ export const generateForwardMessageContent = (
 
 	// hacky copy
 	content = normalizeMessageContent(content)
-	content = proto.Message.decode(proto.Message.encode(content!).finish())
+	content = proto.Message.decode(proto.Message.encode(content).finish())
 
 	let key = Object.keys(content)[0] as MessageType
 
@@ -551,36 +551,36 @@ export const generateWAMessageFromContent = (
 		options.timestamp = new Date()
 	}
 
-	const innerMessage = normalizeMessageContent(message)!
-	const key: string = getContentType(innerMessage)!
+	const innerMessage = normalizeMessageContent(message)
+	const key: string = getContentType(innerMessage)
 	const timestamp = unixTimestampSeconds(options.timestamp)
 	const { quoted, userJid } = options
 
 	if(quoted) {
 		const participant = quoted.key.fromMe ? userJid : (quoted.participant || quoted.key.participant || quoted.key.remoteJid)
 
-		let quotedMsg = normalizeMessageContent(quoted.message)!
-		const msgType = getContentType(quotedMsg)!
+		let quotedMsg = normalizeMessageContent(quoted.message)
+		const msgType = getContentType(quotedMsg)
 		// strip any redundant properties
 		if(quotedMsg) {
 		    quotedMsg = proto.Message.fromObject({ [msgType]: quotedMsg[msgType] })
-    
+
 		    const quotedContent = quotedMsg[msgType]
 		    if(typeof quotedContent === 'object' && quotedContent && 'contextInfo' in quotedContent) {
 			    delete quotedContent.contextInfo
 		    }
-    
+
 		    const contextInfo: proto.IContextInfo = innerMessage[key].contextInfo || { }
-		    contextInfo.participant = jidNormalizedUser(participant!)
+		    contextInfo.participant = jidNormalizedUser(participant)
 		    contextInfo.stanzaId = quoted.key.id
 		    contextInfo.quotedMessage = quotedMsg
-    
+
 		    // if a participant is quoted, then it must be a group
 		    // hence, remoteJid of group must also be entered
 		    if(jid !== quoted.key.remoteJid) {
 			    contextInfo.remoteJid = quoted.key.remoteJid
 		    }
-    
+
 		    innerMessage[key].contextInfo = contextInfo
 		}
 	}
@@ -664,7 +664,7 @@ export const normalizeMessageContent = (content: WAMessageContent | null | undef
 		 content = inner.message
 	 }
 
-	 return content!
+	 return content
 
 	 function getFutureProofMessage(message: typeof content) {
 		 return (
@@ -831,13 +831,13 @@ export const aggregateMessageKeysNotFromMe = (keys: proto.IMessageKey[]) => {
 			const uqKey = `${remoteJid}:${participant || ''}`
 			if(!keyMap[uqKey]) {
 				keyMap[uqKey] = {
-					jid: remoteJid!,
-					participant: participant!,
+					jid: remoteJid,
+					participant: participant,
 					messageIds: []
 				}
 			}
 
-			keyMap[uqKey].messageIds.push(id!)
+			keyMap[uqKey].messageIds.push(id)
 		}
 	}
 
@@ -863,7 +863,7 @@ export const downloadMediaMessage = async<Type extends 'buffer' | 'stream'>(
 	const result = await downloadMsg()
 		.catch(async(error) => {
 			if(ctx && axios.isAxiosError(error) && // check if the message requires a reupload
-					REUPLOAD_REQUIRED_STATUS.includes(error.response?.status!)) {
+					REUPLOAD_REQUIRED_STATUS.includes(error.response?.status)) {
 				ctx.logger.info({ key: message.key }, 'sending reupload media request...')
 				// request reupload
 				message = await ctx.reuploadRequest(message)
@@ -884,7 +884,7 @@ export const downloadMediaMessage = async<Type extends 'buffer' | 'stream'>(
 
 		const contentType = getContentType(mContent)
 		let mediaType = contentType?.replace('Message', '') as MediaType
-		const media = mContent[contentType!]
+		const media = mContent[contentType]
 
 		if(!media || typeof media !== 'object' || (!('url' in media) && !('thumbnailDirectPath' in media))) {
 			throw new Boom(`"${contentType}" message is not a media message`)

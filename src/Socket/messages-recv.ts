@@ -119,7 +119,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 		}
 
 		if(tag === 'message' && getBinaryNodeChild({ tag, attrs, content }, 'unavailable')) {
-			stanza.attrs.from = authState.creds.me!.id
+			stanza.attrs.from = authState.creds.me.id
 		}
 
 		logger.debug({ recv: { tag, attrs }, sent: stanza.attrs }, 'sent ack')
@@ -130,7 +130,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 		const stanza: BinaryNode = ({
 			tag: 'call',
 			attrs: {
-				from: authState.creds.me!.id,
+				from: authState.creds.me.id,
 				to: callFrom,
 			},
 			content: [{
@@ -147,9 +147,9 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 	}
 
 	const sendRetryRequest = async(node: BinaryNode, forceIncludeKeys = false) => {
-		const { fullMessage } = decodeMessageNode(node, authState.creds.me!.id, authState.creds.me!.lid || '')
+		const { fullMessage } = decodeMessageNode(node, authState.creds.me.id, authState.creds.me.lid || '')
 		const { key: msgKey } = fullMessage
-		const msgId = msgKey.id!
+		const msgId = msgKey.id
 
 		const key = `${msgId}:${msgKey?.participant}`
 		let retryCount = msgRetryCache.get<number>(key) || 0
@@ -170,7 +170,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 			logger.debug(`sendRetryRequest: requested placeholder resend for message ${msgId}`)
 		}
 
-		const deviceIdentity = encodeSignedDeviceIdentity(account!, true)
+		const deviceIdentity = encodeSignedDeviceIdentity(account, true)
 		await authState.keys.transaction(
 			async() => {
 				const receipt: BinaryNode = {
@@ -212,7 +212,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 					const [keyId] = Object.keys(preKeys)
 					const key = preKeys[+keyId]
 
-					const content = receipt.content! as BinaryNode[]
+					const content = receipt.content as BinaryNode[]
 					content.push({
 						tag: 'keys',
 						attrs: { },
@@ -239,7 +239,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 		const from = node.attrs.from
 		if(from === S_WHATSAPP_NET) {
 			const countChild = getBinaryNodeChild(node, 'count')
-			const count = +countChild!.attrs.value
+			const count = +countChild.attrs.value
 			const shouldUploadMorePreKeys = count < MIN_PREKEY_COUNT
 
 			logger.debug({ count, shouldUploadMorePreKeys }, 'recv pre-key count')
@@ -402,7 +402,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 			break
 		case 'devices':
 			const devices = getBinaryNodeChildren(child, 'device')
-			if(areJidsSameUser(child.attrs.jid, authState.creds.me!.id)) {
+			if(areJidsSameUser(child.attrs.jid, authState.creds.me.id)) {
 				const deviceJids = devices.map(d => d.attrs.jid)
 				logger.info({ deviceJids }, 'got my own devices')
 			}
@@ -500,7 +500,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 					{
 						tag: 'link_code_companion_reg',
 						attrs: {
-							jid: authState.creds.me!.id,
+							jid: authState.creds.me.id,
 							stage: 'companion_finish',
 						},
 						content: [
@@ -535,7 +535,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 	async function decipherLinkPublicKey(data: Uint8Array | Buffer) {
 		const buffer = toRequiredBuffer(data)
 		const salt = buffer.slice(0, 32)
-		const secretKey = await derivePairingCodeKey(authState.creds.pairingCode!, salt)
+		const secretKey = await derivePairingCodeKey(authState.creds.pairingCode, salt)
 		const iv = buffer.slice(32, 48)
 		const payload = buffer.slice(48, 80)
 		return aesDecryptCTR(payload, secretKey, iv)
@@ -568,7 +568,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 	) => {
 	  // todo: implement a cache to store the last 256 sent messages (copy whatsmeow)
 		const msgs = await Promise.all(ids.map(id => getMessage({ ...key, id })))
-		const remoteJid = key.remoteJid!
+		const remoteJid = key.remoteJid
 		const participant = key.participant || remoteJid
 		// if it's the primary jid sending the request
 		// just re-send the message to everyone
@@ -596,7 +596,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 					}
 				}
 
-				await relayMessage(key.remoteJid!, msg, msgRelayOpts)
+				await relayMessage(key.remoteJid, msg, msgRelayOpts)
 			} else {
 				logger.debug({ jid: key.remoteJid, id: ids[i] }, 'recv retry request, but message not available')
 			}
@@ -609,7 +609,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 		const isNodeFromMe = areJidsSameUser(attrs.participant || attrs.from, isLid ? authState.creds.me?.lid : authState.creds.me?.id)
 		const remoteJid = !isNodeFromMe || isJidGroup(attrs.from) ? attrs.from : attrs.recipient
 		const fromMe = !attrs.recipient || (
-			(attrs.type === 'retry' || attrs.type === 'sender') 
+			(attrs.type === 'retry' || attrs.type === 'sender')
 			&& isNodeFromMe
 		)
 
@@ -679,7 +679,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 								if(key.fromMe) {
 									try {
 										logger.debug({ attrs, key }, 'recv retry request')
-										await sendMessagesAgain(key, ids, retryNode!)
+										await sendMessagesAgain(key, ids, retryNode)
 									} catch(error) {
 										logger.error({ key, ids, trace: error.stack }, 'error in sending message again')
 									}
@@ -712,7 +712,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 					async() => {
 						const msg = await processNotification(node)
 						if(msg) {
-							const fromMe = areJidsSameUser(node.attrs.participant || remoteJid, authState.creds.me!.id)
+							const fromMe = areJidsSameUser(node.attrs.participant || remoteJid, authState.creds.me.id)
 							msg.key = {
 								remoteJid,
 								fromMe,
@@ -754,7 +754,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 
 		if(getBinaryNodeChild(node, 'unavailable') && !encNode) {
 			await sendMessageAck(node)
-			const { key } = decodeMessageNode(node, authState.creds.me!.id, authState.creds.me!.lid || '').fullMessage
+			const { key } = decodeMessageNode(node, authState.creds.me.id, authState.creds.me.lid || '').fullMessage
 			response = await requestPlaceholderResend(key)
 			if(response === 'RESOLVED') {
 				return
@@ -770,8 +770,8 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 
 		const { fullMessage: msg, category, author, decrypt } = decryptMessageNode(
 			node,
-			authState.creds.me!.id,
-			authState.creds.me!.lid || '',
+			authState.creds.me.id,
+			authState.creds.me.lid || '',
 			signalRepository,
 			logger,
 		)
@@ -821,24 +821,24 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 							} else if(msg.key.fromMe) { // message was sent by us from a different device
 								type = 'sender'
 								// need to specially handle this case
-								if(isJidUser(msg.key.remoteJid!)) {
+								if(isJidUser(msg.key.remoteJid)) {
 									participant = author
 								}
 							} else if(!sendActiveReceipts) {
 								type = 'inactive'
 							}
 
-							await sendReceipt(msg.key.remoteJid!, participant!, [msg.key.id!], type)
+							await sendReceipt(msg.key.remoteJid, participant, [msg.key.id], type)
 
 							// send ack for history message
-							const isAnyHistoryMsg = getHistoryMsg(msg.message!)
+							const isAnyHistoryMsg = getHistoryMsg(msg.message)
 							if(isAnyHistoryMsg) {
-								const jid = jidNormalizedUser(msg.key.remoteJid!)
-								await sendReceipt(jid, undefined, [msg.key.id!], 'hist_sync')
+								const jid = jidNormalizedUser(msg.key.remoteJid)
+								await sendReceipt(jid, undefined, [msg.key.id], 'hist_sync')
 							}
 						}
 
-						cleanMessage(msg, authState.creds.me!.id)
+						cleanMessage(msg, authState.creds.me.id)
 
 						await sendMessageAck(node)
 
@@ -879,16 +879,16 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 			throw new Boom('Not authenticated')
 		}
 
-		if(placeholderResendCache.get(messageKey?.id!)) {
+		if(placeholderResendCache.get(messageKey?.id)) {
 			logger.debug({ messageKey }, 'already requested resend')
 			return
 		} else {
-			placeholderResendCache.set(messageKey?.id!, true)
+			placeholderResendCache.set(messageKey?.id, true)
 		}
 
 		await delay(5000)
 
-		if(!placeholderResendCache.get(messageKey?.id!)) {
+		if(!placeholderResendCache.get(messageKey?.id)) {
 			logger.debug({ messageKey }, 'message received while resend requested')
 			return 'RESOLVED'
 		}
@@ -901,9 +901,9 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 		}
 
 		setTimeout(() => {
-			if(placeholderResendCache.get(messageKey?.id!)) {
+			if(placeholderResendCache.get(messageKey?.id)) {
 				logger.debug({ messageKey }, 'PDO message without response after 15 seconds. Phone possibly offline')
-				placeholderResendCache.del(messageKey?.id!)
+				placeholderResendCache.del(messageKey?.id)
 			}
 		}, 15_000)
 
@@ -1033,7 +1033,7 @@ export const makeMessagesRecvSocket = (config: SocketConfig) => {
 
 			const promise = async() => {
 				while(nodes.length && ws.isOpen) {
-					const { type, node } = nodes.shift()!
+					const { type, node } = nodes.shift()
 
 					const nodeProcessor = nodeProcessorMap.get(type)
 

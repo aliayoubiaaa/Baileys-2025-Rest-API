@@ -1,40 +1,40 @@
-import { Router } from 'express';
-import { body, param, query } from 'express-validator';
-import multer from 'multer';
-import { handleValidationErrors, asyncHandler } from '../middleware/errorHandler';
-import { sessionMiddleware } from '../middleware/auth';
-import { whatsAppService } from '../app';
-import { DatabaseService } from '../services/DatabaseService';
-import { ApiResponse, SendMessageRequest, MessageType } from '../Types/api';
-import { downloadContentFromMessage } from '../Utils/messages-media';
+import { Router } from 'express'
+import { body, param, query } from 'express-validator'
+import multer from 'multer'
+import { whatsAppService } from '../app'
+import { sessionMiddleware } from '../middleware/auth'
+import { asyncHandler, handleValidationErrors } from '../middleware/errorHandler'
+import { DatabaseService } from '../services/DatabaseService'
+import { ApiResponse, MessageType, SendMessageRequest } from '../Types/api'
+import { downloadContentFromMessage } from '../Utils/messages-media'
 
-const router = Router();
-const dbService = new DatabaseService();
+const router = Router()
+const dbService = new DatabaseService()
 
 // Configure multer for file uploads
 const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: {
-    fileSize: parseInt(process.env.MAX_FILE_SIZE || '50') * 1024 * 1024, // 50MB default
-    files: 1
-  },
-  fileFilter: (req, file, cb) => {
-    // Allow common media types
-    const allowedTypes = [
-      'image/jpeg', 'image/png', 'image/gif', 'image/webp',
-      'video/mp4', 'video/mpeg', 'video/quicktime',
-      'audio/mpeg', 'audio/wav', 'audio/ogg',
-      'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    ];
-    
-    if (allowedTypes.includes(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new Error('File type not supported'));
-    }
-  }
-});
+	storage: multer.memoryStorage(),
+	limits: {
+		fileSize: parseInt(process.env.MAX_FILE_SIZE || '50') * 1024 * 1024, // 50MB default
+		files: 1
+	},
+	fileFilter: (req, file, cb) => {
+		// Allow common media types
+		const allowedTypes = [
+			'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+			'video/mp4', 'video/mpeg', 'video/quicktime',
+			'audio/mpeg', 'audio/wav', 'audio/ogg',
+			'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+			'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+		]
+
+		if(allowedTypes.includes(file.mimetype)) {
+			cb(null, true)
+		} else {
+			cb(new Error('File type not supported'))
+		}
+	}
+})
 
 /**
  * @swagger
@@ -70,26 +70,26 @@ const upload = multer({
  *         description: Messages retrieved successfully
  */
 router.get('/:sessionId', [
-  param('sessionId').notEmpty(),
-  query('limit').optional().isInt({ min: 1, max: 100 }),
-  query('offset').optional().isInt({ min: 0 })
-], sessionMiddleware, handleValidationErrors, asyncHandler(async (req, res) => {
-  const { sessionId } = req.params;
-  const { chatId, limit = 50, offset = 0 } = req.query;
+	param('sessionId').notEmpty(),
+	query('limit').optional().isInt({ min: 1, max: 100 }),
+	query('offset').optional().isInt({ min: 0 })
+], sessionMiddleware, handleValidationErrors, asyncHandler(async(req, res) => {
+	const { sessionId } = req.params
+	const { chatId, limit = 50, offset = 0 } = req.query
 
-  const messages = await dbService.getMessages(
-    sessionId,
+	const messages = await dbService.getMessages(
+		sessionId,
     chatId as string,
     parseInt(limit as string),
     parseInt(offset as string)
-  );
+	)
 
-  res.json({
-    success: true,
-    data: messages,
-    timestamp: new Date().toISOString()
-  } as ApiResponse);
-}));
+	res.json({
+		success: true,
+		data: messages,
+		timestamp: new Date().toISOString()
+	} as ApiResponse)
+}))
 
 /**
  * @swagger
@@ -137,42 +137,42 @@ router.get('/:sessionId', [
  *         description: Message sent successfully
  */
 router.post('/:sessionId/send', [
-  param('sessionId').notEmpty(),
-  body('to').notEmpty().trim(),
-  body('content.text').notEmpty().trim(),
-  body('options.quoted').optional().isString(),
-  body('options.mentions').optional().isArray()
-], sessionMiddleware, handleValidationErrors, asyncHandler(async (req, res) => {
-  const { sessionId } = req.params;
-  const { to, content, options = {} } = req.body;
+	param('sessionId').notEmpty(),
+	body('to').notEmpty().trim(),
+	body('content.text').notEmpty().trim(),
+	body('options.quoted').optional().isString(),
+	body('options.mentions').optional().isArray()
+], sessionMiddleware, handleValidationErrors, asyncHandler(async(req, res) => {
+	const { sessionId } = req.params
+	const { to, content, options = {} } = req.body
 
-  try {
-    const messageContent: any = { text: content.text };
-    
-    if (options.quoted) {
-      messageContent.quoted = options.quoted;
-    }
-    
-    if (options.mentions && options.mentions.length > 0) {
-      messageContent.mentions = options.mentions;
-    }
+	try {
+		const messageContent: any = { text: content.text }
 
-    const result = await whatsAppService.sendMessage(sessionId, to, messageContent);
+		if(options.quoted) {
+			messageContent.quoted = options.quoted
+		}
 
-    res.json({
-      success: true,
-      data: result,
-      message: 'Message sent successfully',
-      timestamp: new Date().toISOString()
-    } as ApiResponse);
-  } catch (error) {
-    res.status(400).json({
-      success: false,
-      error: error.message,
-      timestamp: new Date().toISOString()
-    } as ApiResponse);
-  }
-}));
+		if(options.mentions && options.mentions.length > 0) {
+			messageContent.mentions = options.mentions
+		}
+
+		const result = await whatsAppService.sendMessage(sessionId, to, messageContent)
+
+		res.json({
+			success: true,
+			data: result,
+			message: 'Message sent successfully',
+			timestamp: new Date().toISOString()
+		} as ApiResponse)
+	} catch(error) {
+		res.status(400).json({
+			success: false,
+			error: error.message,
+			timestamp: new Date().toISOString()
+		} as ApiResponse)
+	}
+}))
 
 /**
  * @swagger
@@ -212,70 +212,70 @@ router.post('/:sessionId/send', [
  *         description: Media message sent successfully
  */
 router.post('/:sessionId/send-media', upload.single('file') as any, [
-  param('sessionId').notEmpty(),
-  body('to').notEmpty().trim(),
-  body('caption').optional().trim(),
-  body('fileName').optional().trim()
-], sessionMiddleware, handleValidationErrors, asyncHandler(async (req, res) => {
-  const { sessionId } = req.params;
-  const { to, caption, fileName } = req.body;
-  const file = req.file;
+	param('sessionId').notEmpty(),
+	body('to').notEmpty().trim(),
+	body('caption').optional().trim(),
+	body('fileName').optional().trim()
+], sessionMiddleware, handleValidationErrors, asyncHandler(async(req, res) => {
+	const { sessionId } = req.params
+	const { to, caption, fileName } = req.body
+	const file = req.file
 
-  if (!file) {
-    return res.status(400).json({
-      success: false,
-      error: 'No file uploaded',
-      timestamp: new Date().toISOString()
-    } as ApiResponse);
-  }
+	if(!file) {
+		return res.status(400).json({
+			success: false,
+			error: 'No file uploaded',
+			timestamp: new Date().toISOString()
+		} as ApiResponse)
+	}
 
-  try {
-    let messageContent: any;
-    const mediaBuffer = file.buffer;
-    const mimetype = file.mimetype;
+	try {
+		let messageContent: any
+		const mediaBuffer = file.buffer
+		const mimetype = file.mimetype
 
-    if (mimetype.startsWith('image/')) {
-      messageContent = {
-        image: mediaBuffer,
-        caption,
-        fileName: fileName || file.originalname
-      };
-    } else if (mimetype.startsWith('video/')) {
-      messageContent = {
-        video: mediaBuffer,
-        caption,
-        fileName: fileName || file.originalname
-      };
-    } else if (mimetype.startsWith('audio/')) {
-      messageContent = {
-        audio: mediaBuffer,
-        fileName: fileName || file.originalname,
-        mimetype
-      };
-    } else {
-      messageContent = {
-        document: mediaBuffer,
-        fileName: fileName || file.originalname,
-        mimetype
-      };
-    }
+		if(mimetype.startsWith('image/')) {
+			messageContent = {
+				image: mediaBuffer,
+				caption,
+				fileName: fileName || file.originalname
+			}
+		} else if(mimetype.startsWith('video/')) {
+			messageContent = {
+				video: mediaBuffer,
+				caption,
+				fileName: fileName || file.originalname
+			}
+		} else if(mimetype.startsWith('audio/')) {
+			messageContent = {
+				audio: mediaBuffer,
+				fileName: fileName || file.originalname,
+				mimetype
+			}
+		} else {
+			messageContent = {
+				document: mediaBuffer,
+				fileName: fileName || file.originalname,
+				mimetype
+			}
+		}
 
-    const result = await whatsAppService.sendMessage(sessionId, to, messageContent);
+		const result = await whatsAppService.sendMessage(sessionId, to, messageContent)
 
-    res.json({
-      success: true,
-      data: result,
-      message: 'Media message sent successfully',
-      timestamp: new Date().toISOString()
-    } as ApiResponse);
-  } catch (error) {
-    res.status(400).json({
-      success: false,
-      error: error.message,
-      timestamp: new Date().toISOString()
-    } as ApiResponse);
-  }
-}));
+		res.json({
+			success: true,
+			data: result,
+			message: 'Media message sent successfully',
+			timestamp: new Date().toISOString()
+		} as ApiResponse)
+	} catch(error) {
+		res.status(400).json({
+			success: false,
+			error: error.message,
+			timestamp: new Date().toISOString()
+		} as ApiResponse)
+	}
+}))
 
 /**
  * @swagger
@@ -317,42 +317,42 @@ router.post('/:sessionId/send-media', upload.single('file') as any, [
  *         description: Location message sent successfully
  */
 router.post('/:sessionId/send-location', [
-  param('sessionId').notEmpty(),
-  body('to').notEmpty().trim(),
-  body('latitude').isFloat({ min: -90, max: 90 }),
-  body('longitude').isFloat({ min: -180, max: 180 }),
-  body('name').optional().trim(),
-  body('address').optional().trim()
-], sessionMiddleware, handleValidationErrors, asyncHandler(async (req, res) => {
-  const { sessionId } = req.params;
-  const { to, latitude, longitude, name, address } = req.body;
+	param('sessionId').notEmpty(),
+	body('to').notEmpty().trim(),
+	body('latitude').isFloat({ min: -90, max: 90 }),
+	body('longitude').isFloat({ min: -180, max: 180 }),
+	body('name').optional().trim(),
+	body('address').optional().trim()
+], sessionMiddleware, handleValidationErrors, asyncHandler(async(req, res) => {
+	const { sessionId } = req.params
+	const { to, latitude, longitude, name, address } = req.body
 
-  try {
-    const messageContent = {
-      location: {
-        degreesLatitude: latitude,
-        degreesLongitude: longitude,
-        name,
-        address
-      }
-    };
+	try {
+		const messageContent = {
+			location: {
+				degreesLatitude: latitude,
+				degreesLongitude: longitude,
+				name,
+				address
+			}
+		}
 
-    const result = await whatsAppService.sendMessage(sessionId, to, messageContent);
+		const result = await whatsAppService.sendMessage(sessionId, to, messageContent)
 
-    res.json({
-      success: true,
-      data: result,
-      message: 'Location message sent successfully',
-      timestamp: new Date().toISOString()
-    } as ApiResponse);
-  } catch (error) {
-    res.status(400).json({
-      success: false,
-      error: error.message,
-      timestamp: new Date().toISOString()
-    } as ApiResponse);
-  }
-}));
+		res.json({
+			success: true,
+			data: result,
+			message: 'Location message sent successfully',
+			timestamp: new Date().toISOString()
+		} as ApiResponse)
+	} catch(error) {
+		res.status(400).json({
+			success: false,
+			error: error.message,
+			timestamp: new Date().toISOString()
+		} as ApiResponse)
+	}
+}))
 
 /**
  * @swagger
@@ -390,40 +390,40 @@ router.post('/:sessionId/send-location', [
  *         description: Reaction sent successfully
  */
 router.post('/:sessionId/send-reaction', [
-  param('sessionId').notEmpty(),
-  body('to').notEmpty().trim(),
-  body('messageId').notEmpty().trim(),
-  body('emoji').notEmpty().trim()
-], sessionMiddleware, handleValidationErrors, asyncHandler(async (req, res) => {
-  const { sessionId } = req.params;
-  const { to, messageId, emoji } = req.body;
+	param('sessionId').notEmpty(),
+	body('to').notEmpty().trim(),
+	body('messageId').notEmpty().trim(),
+	body('emoji').notEmpty().trim()
+], sessionMiddleware, handleValidationErrors, asyncHandler(async(req, res) => {
+	const { sessionId } = req.params
+	const { to, messageId, emoji } = req.body
 
-  try {
-    const messageContent = {
-      react: {
-        text: emoji,
-        key: {
-          remoteJid: to,
-          id: messageId
-        }
-      }
-    };
+	try {
+		const messageContent = {
+			react: {
+				text: emoji,
+				key: {
+					remoteJid: to,
+					id: messageId
+				}
+			}
+		}
 
-    const result = await whatsAppService.sendMessage(sessionId, to, messageContent);
+		const result = await whatsAppService.sendMessage(sessionId, to, messageContent)
 
-    res.json({
-      success: true,
-      data: result,
-      message: 'Reaction sent successfully',
-      timestamp: new Date().toISOString()
-    } as ApiResponse);
-  } catch (error) {
-    res.status(400).json({
-      success: false,
-      error: error.message,
-      timestamp: new Date().toISOString()
-    } as ApiResponse);
-  }
-}));
+		res.json({
+			success: true,
+			data: result,
+			message: 'Reaction sent successfully',
+			timestamp: new Date().toISOString()
+		} as ApiResponse)
+	} catch(error) {
+		res.status(400).json({
+			success: false,
+			error: error.message,
+			timestamp: new Date().toISOString()
+		} as ApiResponse)
+	}
+}))
 
-export default router;
+export default router

@@ -100,8 +100,8 @@ export const makeEventBuffer = (logger: ILogger): BaileysBufferableEventEmitter 
 		for(const update of chatUpdates) {
 			if(update.conditional) {
 				conditionalChatUpdatesLeft += 1
-				newData.chatUpdates[update.id!] = update
-				delete data.chatUpdates[update.id!]
+				newData.chatUpdates[update.id] = update
+				delete data.chatUpdates[update.id]
 			}
 		}
 
@@ -265,7 +265,7 @@ function append<E extends BufferableEvent>(
 		break
 	case 'chats.update':
 		for(const update of eventData as ChatUpdate[]) {
-			const chatId = update.id!
+			const chatId = update.id
 			const conditionMatches = update.conditional ? update.conditional(data) : true
 			if(conditionMatches) {
 				delete update.conditional
@@ -342,7 +342,7 @@ function append<E extends BufferableEvent>(
 	case 'contacts.update':
 		const contactUpdates = eventData as BaileysEventMap['contacts.update']
 		for(const update of contactUpdates) {
-			const id = update.id!
+			const id = update.id
 			// merge into prior upsert
 			const upsert = data.historySets.contacts[id] || data.contactUpserts[id]
 			if(upsert) {
@@ -468,7 +468,7 @@ function append<E extends BufferableEvent>(
 	case 'groups.update':
 		const groupUpdates = eventData as BaileysEventMap['groups.update']
 		for(const update of groupUpdates) {
-			const id = update.id!
+			const id = update.id
 			const groupUpdate = data.groupUpdates[id] || { }
 			if(!data.groupUpdates[id]) {
 				data.groupUpdates[id] = Object.assign(groupUpdate, update)
@@ -501,7 +501,7 @@ function append<E extends BufferableEvent>(
 	function decrementChatReadCounterIfMsgDidUnread(message: WAMessage) {
 		// decrement chat unread counter
 		// if the message has already been marked read by us
-		const chatId = message.key.remoteJid!
+		const chatId = message.key.remoteJid
 		const chat = data.chatUpdates[chatId] || data.chatUpserts[chatId]
 		if(
 			isRealMessage(message, '')
@@ -601,15 +601,15 @@ function consolidateEvents(data: BufferedEventData) {
 
 function concatChats<C extends Partial<Chat>>(a: C, b: Partial<Chat>) {
 	if(b.unreadCount === null && // neutralize unread counter
-		a.unreadCount! < 0) {
+		a.unreadCount < 0) {
 		a.unreadCount = undefined
 		b.unreadCount = undefined
 	}
 
 	if(typeof a.unreadCount === 'number' && typeof b.unreadCount === 'number') {
 		b = { ...b }
-		if(b.unreadCount! >= 0) {
-			b.unreadCount = Math.max(b.unreadCount!, 0) + Math.max(a.unreadCount, 0)
+		if(b.unreadCount >= 0) {
+			b.unreadCount = Math.max(b.unreadCount, 0) + Math.max(a.unreadCount, 0)
 		}
 	}
 

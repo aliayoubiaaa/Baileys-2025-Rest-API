@@ -69,7 +69,7 @@ export const makeGroupsSocket = (config: SocketConfig) => {
 	}
 
 	sock.ws.on('CB:ib,,dirty', async(node: BinaryNode) => {
-		const { attrs } = getBinaryNodeChild(node, 'dirty')!
+		const { attrs } = getBinaryNodeChild(node, 'dirty')
 		if(attrs.type !== 'groups') {
 			return
 		}
@@ -251,12 +251,12 @@ export const makeGroupsSocket = (config: SocketConfig) => {
 		 */
 		groupAcceptInviteV4: ev.createBufferedFunction(async(key: string | WAMessageKey, inviteMessage: proto.Message.IGroupInviteMessage) => {
 			key = typeof key === 'string' ? { remoteJid: key } : key
-			const results = await groupQuery(inviteMessage.groupJid!, 'set', [{
+			const results = await groupQuery(inviteMessage.groupJid, 'set', [{
 				tag: 'accept',
 				attrs: {
-					code: inviteMessage.inviteCode!,
-					expiration: inviteMessage.inviteExpiration!.toString(),
-					admin: key.remoteJid!
+					code: inviteMessage.inviteCode,
+					expiration: inviteMessage.inviteExpiration.toString(),
+					admin: key.remoteJid
 				}
 			}])
 
@@ -290,7 +290,7 @@ export const makeGroupsSocket = (config: SocketConfig) => {
 					},
 					messageStubType: WAMessageStubType.GROUP_PARTICIPANT_ADD,
 					messageStubParameters: [
-						authState.creds.me!.id
+						authState.creds.me.id
 					],
 					participant: key.remoteJid,
 					messageTimestamp: unixTimestampSeconds()
@@ -325,7 +325,7 @@ export const makeGroupsSocket = (config: SocketConfig) => {
 
 
 export const extractGroupMetadata = (result: BinaryNode) => {
-	const group = getBinaryNodeChild(result, 'group')!
+	const group = getBinaryNodeChild(result, 'group')
 	const descChild = getBinaryNodeChild(group, 'description')
 	let desc: string | undefined
 	let descId: string | undefined
@@ -339,7 +339,7 @@ export const extractGroupMetadata = (result: BinaryNode) => {
 	const memberAddMode = getBinaryNodeChildString(group, 'member_add_mode') === 'all_member_add'
 	const metadata: GroupMetadata = {
 		id: groupId,
-		addressingMode: group.attrs.addressing_mode as "pn" | "lid",
+		addressingMode: group.attrs.addressing_mode as 'pn' | 'lid',
 		subject: group.attrs.subject,
 		subjectOwner: group.attrs.s_o,
 		subjectTime: +group.attrs.s_t,
