@@ -7,14 +7,15 @@
     "checkJs": false,
     "outDir": "lib",
     "strict": false,
-    "strictNullChecks": true,
+    "strictNullChecks": false,
     "skipLibCheck": true,
-    "noImplicitThis": true,
+    "noImplicitThis": false,
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "forceConsistentCasingInFileNames": true,
     "declaration": true,
-    "lib": ["es2020", "esnext.array", "DOM"]
+    "lib": ["es2020", "esnext.array", "DOM"],
+    "noImplicitAny": false
   },
   "include": ["./src/**/*.ts"],
   "exclude": ["node_modules", "src/Tests/*", "src/Binary/GenerateStatics.ts"]

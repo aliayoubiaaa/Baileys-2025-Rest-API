@@ -144,9 +144,6 @@ io.on('connection', (socket) => {
 const databaseService = new DatabaseService();
 const whatsAppService = new WhatsAppService(io);
 
-// Export for use in routes
-export { whatsAppService };
-
 // Graceful shutdown
 process.on('SIGTERM', async () => {
   logger.info('SIGTERM received, shutting down gracefully');

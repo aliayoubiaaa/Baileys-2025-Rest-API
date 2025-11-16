@@ -125,8 +125,8 @@ export const handleValidationErrors = (
   const errors = validationResult(req);
 
   if (!errors.isEmpty()) {
-    const validationErrors = errors.array().map((error: ValidationError) => ({
-      field: error.param,
+    const validationErrors = errors.array().map((error: any) => ({
+      field: error.param || error.path,
       message: error.msg,
       value: error.value,
       location: error.location
