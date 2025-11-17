@@ -237,6 +237,7 @@ export class DatabaseService {
   }) {
 		return this.prisma.chat.upsert({
 			where: {
+				// eslint-disable-next-line camelcase
 				sessionId_jid: {
 					sessionId: data.sessionId,
 					jid: data.jid
@@ -275,6 +276,7 @@ export class DatabaseService {
   }) {
 		return this.prisma.contact.upsert({
 			where: {
+				// eslint-disable-next-line camelcase
 				sessionId_jid: {
 					sessionId: data.sessionId,
 					jid: data.jid

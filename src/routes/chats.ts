@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { body, param } from 'express-validator'
+import { param } from 'express-validator'
 import { whatsAppService } from '../app'
 import { sessionMiddleware } from '../middleware/auth'
 import { asyncHandler, handleValidationErrors } from '../middleware/errorHandler'

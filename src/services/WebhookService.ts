@@ -327,7 +327,7 @@ export class WebhookService {
 
 	async cleanup(): Promise<void> {
 		// Clear retry timeouts
-		for(const [webhookId, timeoutId] of this.retryQueue) {
+		for(const [_webhookId, timeoutId] of this.retryQueue) {
 			clearTimeout(timeoutId)
 		}
 

@@ -5,8 +5,7 @@ import { whatsAppService } from '../app'
 import { sessionMiddleware } from '../middleware/auth'
 import { asyncHandler, handleValidationErrors } from '../middleware/errorHandler'
 import { DatabaseService } from '../services/DatabaseService'
-import { ApiResponse, MessageType, SendMessageRequest } from '../Types/api'
-import { downloadContentFromMessage } from '../Utils/messages-media'
+import { ApiResponse } from '../Types/api'
 
 const router = Router()
 const dbService = new DatabaseService()

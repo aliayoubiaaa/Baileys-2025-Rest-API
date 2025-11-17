@@ -1,7 +1,7 @@
 import { PrismaClient } from '@prisma/client'
-import { NextFunction, Request, Response } from 'express'
+import { NextFunction, Response } from 'express'
 import jwt from 'jsonwebtoken'
-import { ApiError, AuthenticatedRequest } from '../Types/api'
+import { AuthenticatedRequest } from '../Types/api'
 
 // Extend the AuthenticatedRequest interface to include startTime
 declare module '../Types/api' {

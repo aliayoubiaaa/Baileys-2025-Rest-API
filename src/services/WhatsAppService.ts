@@ -5,13 +5,11 @@ import QRCode from 'qrcode'
 import { Server as SocketIOServer } from 'socket.io'
 import makeWASocket, {
 	AnyMessageContent,
-	BaileysEventMap,
 	ConnectionState,
 	DisconnectReason,
 	fetchLatestBaileysVersion,
 	makeCacheableSignalKeyStore,
-	useMultiFileAuthState,
-	WASocket } from '../index'
+	useMultiFileAuthState } from '../index'
 import { SessionStatus, WhatsAppSession } from '../Types/api'
 import { logger, whatsappLogger } from '../Utils/apiLogger'
 import { DatabaseService } from './DatabaseService'
@@ -81,7 +79,7 @@ export class WhatsAppService {
 					keys: makeCacheableSignalKeyStore(state.keys, whatsappLogger)
 				},
 				generateHighQualityLinkPreview: true,
-				getMessage: async(key) => {
+				getMessage: async(_key) => {
 					// Implement message retrieval from database
 					return undefined
 				}
@@ -346,6 +344,7 @@ export class WhatsAppService {
 			try {
 				await this.dbService.client.group.upsert({
 					where: {
+						// eslint-disable-next-line camelcase
 						sessionId_jid: {
 							sessionId,
 							jid: group.id

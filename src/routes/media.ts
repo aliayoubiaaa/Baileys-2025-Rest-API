@@ -4,7 +4,6 @@ import { whatsAppService } from '../app'
 import { sessionMiddleware } from '../middleware/auth'
 import { asyncHandler, handleValidationErrors } from '../middleware/errorHandler'
 import { ApiResponse } from '../Types/api'
-import { downloadContentFromMessage } from '../Utils/messages-media'
 
 const router = Router()
 
@@ -40,7 +39,7 @@ router.get('/:sessionId/download/:messageId', [
 	param('sessionId').notEmpty(),
 	param('messageId').notEmpty()
 ], sessionMiddleware, handleValidationErrors, asyncHandler(async(req, res) => {
-	const { sessionId, messageId } = req.params
+	const { sessionId } = req.params
 
 	const session = await whatsAppService.getSession(sessionId)
 	if(!session?.socket) {

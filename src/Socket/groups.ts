@@ -339,6 +339,7 @@ export const extractGroupMetadata = (result: BinaryNode) => {
 	const memberAddMode = getBinaryNodeChildString(group, 'member_add_mode') === 'all_member_add'
 	const metadata: GroupMetadata = {
 		id: groupId,
+		// eslint-disable-next-line camelcase
 		addressingMode: group.attrs.addressing_mode as 'pn' | 'lid',
 		subject: group.attrs.subject,
 		subjectOwner: group.attrs.s_o,

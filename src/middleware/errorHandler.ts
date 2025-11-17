@@ -1,6 +1,5 @@
 import { Boom } from '@hapi/boom'
 import { NextFunction, Request, Response } from 'express'
-import { ValidationError } from 'express-validator'
 import { ApiError } from '../Types/api'
 import { logger } from '../Utils/apiLogger'
 
@@ -8,7 +7,7 @@ export const errorHandler = (
 	error: Error | ApiError | Boom,
 	req: Request,
 	res: Response,
-	next: NextFunction
+	_next: NextFunction
 ) => {
 	// Log the error
 	logger.error({
